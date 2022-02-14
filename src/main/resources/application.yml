@@ -10,9 +10,6 @@ management:
     port: '@management.port@'
   metrics:
     export:
-      statsd:
-        flavor: etsy
-        enabled: false
       prometheus:
         enabled: false
   endpoint:
@@ -52,7 +49,7 @@ spring:
     password: changeit
 
 hibernate:
-  physical_naming_strategy: com.rbkmoney.orgmanager.entity.naming.SnakeCaseNamingStrategy
+  physical_naming_strategy: dev.vality.orgmanager.entity.naming.SnakeCaseNamingStrategy
 
 info:
   version: '@project.version@'

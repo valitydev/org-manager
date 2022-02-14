@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.rbkmoney</groupId>
+        <groupId>dev.vality</groupId>
         <artifactId>service-parent-pom</artifactId>
-        <version>2.0.11</version>
+        <version>1.0.9</version>
     </parent>
 
     <artifactId>org-manager</artifactId>
@@ -22,56 +22,47 @@
         <server.rest.port>8080</server.rest.port>
         <management.port>8023</management.port>
         <exposed.ports>${server.port} ${server.rest.port} ${management.port}</exposed.ports>
-        <dockerfile.registry>${env.REGISTRY}</dockerfile.registry>
         <spring-security.version>5.5.2</spring-security.version>
-        <keycloak.version>14.0.0</keycloak.version>
+        <keycloak.version>17.0.0</keycloak.version>
         <schedlock.version>4.14.0</schedlock.version>
         <swag.organizations.version>1.19-8707f87-server</swag.organizations.version>
     </properties>
 
     <dependencies>
-        <!--rbkmoney-->
+        <!--vality-->
         <dependency>
-            <groupId>com.rbkmoney</groupId>
-            <artifactId>spring-boot-starter-metrics-statsd</artifactId>
-            <version>1.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.rbkmoney</groupId>
-            <artifactId>custom-actuator-endpoints</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.rbkmoney.woody</groupId>
+            <groupId>dev.vality.woody</groupId>
             <artifactId>woody-thrift</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.rbkmoney</groupId>
+            <groupId>dev.vality</groupId>
             <artifactId>shared-resources</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.rbkmoney</groupId>
+            <groupId>dev.vality</groupId>
             <artifactId>swag-organizations</artifactId>
-            <version>${swag.organizations.version}</version>
+            <version>1.1-bb2f2f5-server</version>
         </dependency>
         <dependency>
-            <groupId>com.rbkmoney</groupId>
+            <groupId>dev.vality</groupId>
             <artifactId>damsel</artifactId>
+            <version>1.544-dcd92dd</version>
         </dependency>
         <dependency>
-            <groupId>com.rbkmoney</groupId>
+            <groupId>dev.vality</groupId>
             <artifactId>org-management-proto</artifactId>
-            <version>1.2-06c5c84</version>
+            <version>1.6-abb4b4d</version>
             <exclusions>
                 <exclusion>
-                    <groupId>com.rbkmoney</groupId>
+                    <groupId>dev.vality</groupId>
                     <artifactId>bouncer-proto</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.rbkmoney</groupId>
+            <groupId>dev.vality</groupId>
             <artifactId>bouncer-proto</artifactId>
-            <version>1.20-7dee26e</version>
+            <version>1.36-96bd74d</version>
         </dependency>
         <!--spring-->
         <dependency>
@@ -168,6 +159,14 @@
 
         <!--third party-->
         <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <version>4.0.1</version>
@@ -229,7 +228,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
-            <version>1.16.0</version>
+            <version>1.16.3</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -280,7 +279,7 @@
                 </dependencies>
                 <configuration>
                     <resourceBundles>
-                        <resourceBundle>com.rbkmoney:shared-resources:${shared-resources.version}</resourceBundle>
+                        <resourceBundle>dev.vality:shared-resources:${shared-resources.version}</resourceBundle>
                     </resourceBundles>
                     <attachToMain>false</attachToMain>
                     <attachToTest>false</attachToTest>

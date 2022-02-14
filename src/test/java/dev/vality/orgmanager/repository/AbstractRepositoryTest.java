@@ -56,7 +56,7 @@ public abstract class AbstractRepositoryTest {
 
     @ClassRule
     @SuppressWarnings("rawtypes")
-    public static PostgreSQLContainer postgres = new PostgreSQLContainer<>("postgres:9.6")
+    public static PostgreSQLContainer postgres = new PostgreSQLContainer<>("postgres:13.6")
             .withStartupTimeout(Duration.ofMinutes(5));
 
     public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

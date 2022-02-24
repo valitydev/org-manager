@@ -62,7 +62,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>bouncer-proto</artifactId>
-            <version>1.37-ed0585f</version>
+            <version>1.39-633ba73</version>
         </dependency>
         <!--spring-->
         <dependency>

@@ -51,7 +51,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>org-management-proto</artifactId>
-            <version>1.6-abb4b4d</version>
+            <version>1.10-f433223</version>
             <exclusions>
                 <exclusion>
                     <groupId>dev.vality</groupId>

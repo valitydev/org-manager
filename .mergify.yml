@@ -1,0 +1,9 @@
+pull_request_rules:
+  - name: automatic merge for valitydev-bot pull requests
+    conditions:
+      - author=valitydev-bot
+      - check-success=lint / yamllint
+      - check-success=lint / hadolint
+    actions:
+      merge:
+        method: squash

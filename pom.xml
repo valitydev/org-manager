@@ -6,7 +6,7 @@
     <parent>
         <groupId>dev.vality</groupId>
         <artifactId>service-parent-pom</artifactId>
-        <version>1.0.13</version>
+        <version>1.0.14</version>
     </parent>
 
     <artifactId>org-manager</artifactId>
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>damsel</artifactId>
-            <version>1.556-6d2bc92</version>
+            <version>1.558-3efe7df</version>
         </dependency>
         <dependency>
             <groupId>dev.vality</groupId>

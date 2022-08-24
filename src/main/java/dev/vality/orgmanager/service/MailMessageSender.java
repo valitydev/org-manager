@@ -18,6 +18,8 @@ public class MailMessageSender {
 
     @Value("${dashboard.url}")
     private String dashboardUrl;
+    @Value("${dudoser.mail-from}")
+    private String mailFrom;
 
     private final MessageSenderSrv.Iface dudoserClient;
 
@@ -27,8 +29,8 @@ public class MailMessageSender {
             messageMail.setMailBody(new MailBody(dashboardUrl + body));
             messageMail.setToEmails(List.of(email));
             messageMail.setSubject("Подтверждение вступления в организацию");
-            messageMail.setFromEmail("no-reply@rbkmoney.com");
-
+            messageMail.setFromEmail(mailFrom);
+            log.info("Try to send message to email: {}", email);
             dudoserClient.send(Message.message_mail(messageMail));
         } catch (Exception ex) {
             log.warn("dudoserClient error", ex);

@@ -1,10 +1,8 @@
 package dev.vality.orgmanager.service;
 
-import dev.vality.damsel.payment_processing.InvalidUser;
 import dev.vality.damsel.payment_processing.PartyExists;
 import dev.vality.damsel.payment_processing.PartyManagementSrv;
 import dev.vality.damsel.payment_processing.PartyParams;
-import dev.vality.damsel.payment_processing.UserInfo;
 import dev.vality.orgmanager.exception.PartyManagementException;
 import org.apache.thrift.TException;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,14 +13,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static dev.vality.orgmanager.TestObjectFactory.randomString;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PartyManagementServiceImplTest {
@@ -39,26 +33,26 @@ class PartyManagementServiceImplTest {
 
     @Test
     void shouldThrowPartyManagementExceptionOnCreateParty() throws TException {
-        doThrow(new InvalidUser())
-                .when(partyManagementClient).create(any(UserInfo.class), anyString(), any(PartyParams.class));
+        doThrow(new TException())
+                .when(partyManagementClient).create(anyString(), any(PartyParams.class));
         String partyId = randomString();
         String userId = randomString();
         String email = randomString();
 
-        PartyManagementException partyManagementException =
+        var exception =
                 assertThrows(
                         PartyManagementException.class,
                         () -> partyManagementService.createParty(partyId, userId, email)
                 );
 
-        assertTrue(partyManagementException.getMessage().contains(String.format(
+        assertTrue(exception.getMessage().contains(String.format(
                 "Exception during party creation. (partyId: %s, userId: %s, email: %s)", partyId, userId, email)));
     }
 
     @Test
     void shouldCreatePartyIfPartyExistThrown() throws TException {
         doThrow(new PartyExists())
-                .when(partyManagementClient).create(any(UserInfo.class), anyString(), any(PartyParams.class));
+                .when(partyManagementClient).create(anyString(), any(PartyParams.class));
         String partyId = randomString();
         String userId = randomString();
         String email = randomString();
@@ -66,7 +60,7 @@ class PartyManagementServiceImplTest {
         partyManagementService.createParty(partyId, userId, email);
 
         verify(partyManagementClient, times(1))
-                .create(any(UserInfo.class), anyString(), any(PartyParams.class));
+                .create(anyString(), any(PartyParams.class));
     }
 
     @Test
@@ -77,16 +71,11 @@ class PartyManagementServiceImplTest {
 
         partyManagementService.createParty(partyId, userId, email);
 
-        ArgumentCaptor<UserInfo> userInfoCaptor = ArgumentCaptor.forClass(UserInfo.class);
         ArgumentCaptor<String> partyIdCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<PartyParams> partyParamsCaptor = ArgumentCaptor.forClass(PartyParams.class);
 
         verify(partyManagementClient, times(1))
-                .create(userInfoCaptor.capture(), partyIdCaptor.capture(), partyParamsCaptor.capture());
-
-        assertEquals(1, userInfoCaptor.getAllValues().size());
-        assertEquals(userId, userInfoCaptor.getValue().getId());
-        assertTrue(userInfoCaptor.getValue().getType().isSetExternalUser());
+                .create(partyIdCaptor.capture(), partyParamsCaptor.capture());
 
         assertEquals(1, partyIdCaptor.getAllValues().size());
         assertEquals(partyId, partyIdCaptor.getValue());

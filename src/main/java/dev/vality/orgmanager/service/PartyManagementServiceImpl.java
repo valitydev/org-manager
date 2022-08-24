@@ -1,12 +1,9 @@
 package dev.vality.orgmanager.service;
 
 import dev.vality.damsel.domain.PartyContactInfo;
-import dev.vality.damsel.payment_processing.ExternalUser;
 import dev.vality.damsel.payment_processing.PartyExists;
 import dev.vality.damsel.payment_processing.PartyManagementSrv;
 import dev.vality.damsel.payment_processing.PartyParams;
-import dev.vality.damsel.payment_processing.UserInfo;
-import dev.vality.damsel.payment_processing.UserType;
 import dev.vality.orgmanager.exception.PartyManagementException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +19,9 @@ public class PartyManagementServiceImpl implements PartyManagementService {
 
     @Override
     public void createParty(String partyId, String userId, String email) {
-        UserInfo userInfo = new UserInfo(userId, UserType.external_user(new ExternalUser()));
         PartyParams partyParams = new PartyParams(new PartyContactInfo(email));
         try {
-            partyManagementClient.create(userInfo, partyId, partyParams);
+            partyManagementClient.create(partyId, partyParams);
         } catch (PartyExists ex) {
             log.warn("Party already exists. (partyId: {}, userId: {}, email: {})", partyId, userId, email);
         } catch (TException ex) {

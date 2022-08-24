@@ -78,9 +78,10 @@ scheduler:
 dudoser:
   url: http://dudoser:8022/dudos
   networkTimeout: 10000
+  mail-from: no-reply@vality.dev
 
 party-management:
-  url: http://party-management:8022/party/time
+  url: http://party-management:8022/processing/partymgmt
   networkTimeout: 10000
 
 dashboard:

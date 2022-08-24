@@ -6,7 +6,7 @@
     <parent>
         <groupId>dev.vality</groupId>
         <artifactId>service-parent-pom</artifactId>
-        <version>1.0.15</version>
+        <version>1.0.18</version>
     </parent>
 
     <artifactId>org-manager</artifactId>
@@ -46,12 +46,11 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>damsel</artifactId>
-            <version>1.558-3efe7df</version>
         </dependency>
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>org-management-proto</artifactId>
-            <version>1.10-f433223</version>
+            <version>1.11-03a269d</version>
             <exclusions>
                 <exclusion>
                     <groupId>dev.vality</groupId>
@@ -62,7 +61,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>bouncer-proto</artifactId>
-            <version>1.39-633ba73</version>
+            <version>1.41-5628c61</version>
         </dependency>
         <!--spring-->
         <dependency>

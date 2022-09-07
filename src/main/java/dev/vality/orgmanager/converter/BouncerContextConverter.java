@@ -1,7 +1,10 @@
 package dev.vality.orgmanager.converter;
 
 import dev.vality.bouncer.base.Entity;
-import dev.vality.bouncer.context.v1.*;
+import dev.vality.bouncer.context.v1.OrgRole;
+import dev.vality.bouncer.context.v1.OrgRoleScope;
+import dev.vality.bouncer.context.v1.Organization;
+import dev.vality.bouncer.context.v1.User;
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
@@ -34,7 +37,7 @@ public class BouncerContextConverter {
         return new Organization()
                 .setId(entity.getId())
                 .setOwner(new Entity().setId(entity.getOwner()))
-                .setParty(new Entity().setId(entity.getId()))
+                .setParty(new Entity().setId(entity.getParty()))
                 .setRoles(CollectionUtils.isEmpty(roles) ? null :
                         roles.stream()
                                 .filter(memberRoleEntity -> memberRoleEntity.getOrganizationId().equals(entity.getId()))

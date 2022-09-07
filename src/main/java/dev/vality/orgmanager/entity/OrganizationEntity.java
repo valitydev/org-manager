@@ -5,7 +5,6 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -41,5 +40,6 @@ public class OrganizationEntity implements Serializable {
     private LocalDateTime createdAt;
     private String name;
     private String owner;
+    private String party;
     private String metadata;
 }

@@ -1,16 +1,13 @@
 package dev.vality.orgmanager;
 
 import dev.vality.bouncer.base.Entity;
+import dev.vality.bouncer.context.v1.OrgRole;
+import dev.vality.bouncer.context.v1.OrgRoleScope;
 import dev.vality.bouncer.context.v1.Organization;
-import dev.vality.bouncer.context.v1.*;
-import dev.vality.orgmanager.entity.InvitationEntity;
-import dev.vality.orgmanager.entity.MemberEntity;
-import dev.vality.orgmanager.entity.MemberRoleEntity;
-import dev.vality.orgmanager.entity.OrganizationEntity;
-import dev.vality.orgmanager.entity.OrganizationRoleEntity;
+import dev.vality.bouncer.context.v1.User;
+import dev.vality.orgmanager.entity.*;
 import dev.vality.orgmanager.service.dto.BouncerContextDto;
 import dev.vality.orgmanager.service.dto.RoleDto;
-import dev.vality.swag.organizations.model.Invitee;
 import dev.vality.swag.organizations.model.*;
 import org.keycloak.representations.AccessToken;
 
@@ -115,10 +112,13 @@ public abstract class TestObjectFactory {
 
     public static OrganizationEntity buildOrganization() {
         OrganizationEntity entity = new OrganizationEntity();
-        entity.setId(randomString());
+        String orgId = randomString();
+        entity.setId(orgId);
         entity.setCreatedAt(LocalDateTime.now());
         entity.setName(randomString());
         entity.setOwner(randomString());
+        entity.setParty(orgId);
+        entity.setMetadata("{\"a\":\"b\"}");
         return entity;
     }
 

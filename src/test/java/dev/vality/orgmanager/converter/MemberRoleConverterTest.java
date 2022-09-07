@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MemberRoleConverterTest {
+class MemberRoleConverterTest {
 
     private MemberRoleConverter converter;
 
@@ -36,7 +36,9 @@ public class MemberRoleConverterTest {
                 .build();
 
         assertThat(entity.getId()).isNotEmpty();
-        assertThat(entity).isEqualToIgnoringNullFields(expected);
+        assertThat(entity).usingRecursiveComparison()
+                .ignoringExpectedNullFields()
+                .isEqualTo(expected);
     }
 
     @Test
@@ -61,7 +63,10 @@ public class MemberRoleConverterTest {
                 .build();
 
         assertThat(entity.getId()).isNotEmpty();
-        assertThat(entity).isEqualToIgnoringNullFields(expected);
+        assertThat(entity)
+                .usingRecursiveComparison()
+                .ignoringExpectedNullFields()
+                .isEqualTo(expected);
     }
 
     @Test
@@ -81,7 +86,7 @@ public class MemberRoleConverterTest {
                 .id(entity.getId())
                 .roleId(RoleId.ADMINISTRATOR);
 
-        assertThat(role).isEqualToComparingFieldByField(expected);
+        assertThat(role).usingRecursiveComparison().isEqualTo(expected);
     }
 
     @Test
@@ -106,6 +111,6 @@ public class MemberRoleConverterTest {
                         .resourceId("resource")
                         .id(ResourceScopeId.SHOP));
 
-        assertThat(role).isEqualToComparingFieldByField(expected);
+        assertThat(role).usingRecursiveComparison().isEqualTo(expected);
     }
 }

@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class MemberConverterTest {
+class MemberConverterTest {
 
     private MemberConverter converter;
 
@@ -46,7 +46,8 @@ public class MemberConverterTest {
                 .userEmail("email")
                 .roles(List.of(new MemberRole()));
 
-        assertThat(member).isEqualToComparingFieldByField(expected);
+        assertThat(member).usingRecursiveComparison()
+                .isEqualTo(expected);
     }
 
     private MemberEntity buildMemberEntity() {

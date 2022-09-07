@@ -18,11 +18,13 @@ public class OrganizationConverter {
     private final JsonMapper jsonMapper;
 
     public OrganizationEntity toEntity(Organization organization, String ownerId) {
+        String orgId = UUID.randomUUID().toString();
         return OrganizationEntity.builder()
-                .id(UUID.randomUUID().toString())
+                .id(orgId)
                 .createdAt(LocalDateTime.now())
                 .name(organization.getName())
                 .owner(ownerId)
+                .party(orgId)
                 .metadata(jsonMapper.toJson(organization.getMetadata()))
                 .build();
     }
@@ -33,6 +35,7 @@ public class OrganizationConverter {
                 .createdAt(OffsetDateTime.of(entity.getCreatedAt(), ZoneOffset.UTC))
                 .name(entity.getName())
                 .owner(entity.getOwner())
+                .party(entity.getParty())
                 .metadata(entity.getMetadata() != null ? jsonMapper.toMap(entity.getMetadata()) : null);
     }
 

@@ -1,21 +1,19 @@
 package dev.vality.orgmanager.converter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.vality.orgmanager.TestObjectFactory;
 import dev.vality.orgmanager.entity.OrganizationEntity;
-import dev.vality.orgmanager.entity.OrganizationRoleEntity;
 import dev.vality.orgmanager.util.JsonMapper;
 import dev.vality.swag.organizations.model.Organization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.Map;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class OrganizationConverterTest {
+class OrganizationConverterTest {
 
     private OrganizationConverter converter;
 
@@ -30,51 +28,37 @@ public class OrganizationConverterTest {
     void shouldConvertToEntity() {
         // Given
         Organization organization = new Organization()
-                .name("org")
+                .name(TestObjectFactory.randomString())
                 .metadata(Map.of("a", "b"));
 
         // When
-        OrganizationEntity entity = converter.toEntity(organization, "testOwnerId");
+        String testOwnerId = "testOwnerId";
+        OrganizationEntity entity = converter.toEntity(organization, testOwnerId);
 
         // Then
-        OrganizationEntity expected = OrganizationEntity.builder()
-                .name("org")
-                .owner("testOwnerId")
-                .metadata("{\"a\":\"b\"}")
-                .build();
-
         assertThat(entity.getId()).isNotEmpty();
+        assertThat(entity.getParty()).isNotEmpty();
+        assertEquals(entity.getId(), entity.getParty());
         assertThat(entity.getCreatedAt()).isNotNull();
-        assertThat(entity).isEqualToIgnoringNullFields(expected);
+        assertEquals(organization.getName(), entity.getName());
+        assertEquals("{\"a\":\"b\"}", entity.getMetadata());
+        assertEquals(testOwnerId, entity.getOwner());
     }
 
     @Test
     void shouldConvertToDomain() {
         // Given
-        OrganizationEntity entity = buildOrganizationEntity();
+        OrganizationEntity entity = TestObjectFactory.buildOrganization();
 
         // When
         Organization organization = converter.toDomain(entity);
 
         // Then
-        Organization expected = new Organization()
-                .id("id")
-                .createdAt(OffsetDateTime.parse("2019-08-24T14:15:22Z"))
-                .name("org")
-                .owner("own")
-                .metadata(Map.of("a", "b"));
-
-        assertThat(organization).isEqualToComparingFieldByField(expected);
-    }
-
-    private OrganizationEntity buildOrganizationEntity() {
-        return OrganizationEntity.builder()
-                .id("id")
-                .createdAt(LocalDateTime.parse("2019-08-24T14:15:22"))
-                .name("org")
-                .owner("own")
-                .metadata("{\"a\":\"b\"}")
-                .roles(Set.of(new OrganizationRoleEntity()))
-                .build();
+        assertThat(organization.getId()).isNotEmpty();
+        assertThat(organization.getParty()).isNotEmpty();
+        assertThat(organization.getCreatedAt()).isNotNull();
+        assertEquals(entity.getName(), organization.getName());
+        assertEquals(Map.of("a", "b"), organization.getMetadata());
+        assertEquals(entity.getOwner(), organization.getOwner());
     }
 }

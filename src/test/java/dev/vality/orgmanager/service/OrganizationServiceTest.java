@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class OrganizationServiceTest {
+class OrganizationServiceTest {
 
     @Mock
     private OrganizationConverter organizationConverter;
@@ -53,7 +53,7 @@ public class OrganizationServiceTest {
     void shouldThrowPartyManagementExceptionOnCreate() {
         Organization organization = new Organization();
         OrganizationEntity entity = new OrganizationEntity();
-        OrganizationEntity savedEntity = new OrganizationEntity();
+        OrganizationEntity savedEntity = TestObjectFactory.buildOrganization();
 
         when(organizationConverter.toEntity(organization, OWNER_ID))
                 .thenReturn(entity);
@@ -70,7 +70,7 @@ public class OrganizationServiceTest {
         verify(organizationRepository, times(1))
                 .save(entity);
         verify(partyManagementService, times(1))
-                .createParty(OWNER_ID, OWNER_ID, EMAIL);
+                .createParty(savedEntity.getParty(), OWNER_ID, EMAIL);
         verify(organizationConverter, times(0))
                 .toDomain(any(OrganizationEntity.class));
     }
@@ -79,8 +79,9 @@ public class OrganizationServiceTest {
     void shouldCreate() {
         Organization organization = new Organization();
         OrganizationEntity entity = new OrganizationEntity();
-        OrganizationEntity savedEntity = new OrganizationEntity();
+        OrganizationEntity savedEntity = TestObjectFactory.buildOrganization();
         Organization savedOrganization = new Organization();
+        savedOrganization.setParty(TestObjectFactory.randomString());
 
         when(organizationConverter.toEntity(organization, OWNER_ID))
                 .thenReturn(entity);
@@ -96,13 +97,13 @@ public class OrganizationServiceTest {
         verify(organizationRepository, times(1))
                 .save(entity);
         verify(partyManagementService, times(1))
-                .createParty(OWNER_ID, OWNER_ID, EMAIL);
+                .createParty(savedEntity.getParty(), OWNER_ID, EMAIL);
         verify(organizationConverter, times(1))
                 .toDomain(savedEntity);
         assertThat(response)
                 .isEqualTo(savedOrganization);
         assertThat(response.getParty())
-                .isEqualTo(OWNER_ID);
+                .isEqualTo(savedOrganization.getParty());
     }
 
     @Test

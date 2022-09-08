@@ -13,7 +13,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OrganizationRoleConverterTest {
+class OrganizationRoleConverterTest {
 
     private OrganizationRoleConverter converter;
 
@@ -44,6 +44,6 @@ public class OrganizationRoleConverterTest {
                 .name("name")
                 .scopes(List.of(ResourceScopeId.SHOP));
 
-        assertThat(role).isEqualToComparingFieldByField(expected);
+        assertThat(role).usingRecursiveComparison().isEqualTo(expected);
     }
 }

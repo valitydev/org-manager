@@ -112,36 +112,33 @@ public abstract class TestObjectFactory {
 
     public static OrganizationEntity buildOrganization() {
         OrganizationEntity entity = new OrganizationEntity();
-        String orgId = randomString();
-        entity.setId(orgId);
+        entity.setId(randomString());
         entity.setCreatedAt(LocalDateTime.now());
         entity.setName(randomString());
         entity.setOwner(randomString());
-        entity.setParty(orgId);
+        entity.setParty(randomString());
         entity.setMetadata("{\"a\":\"b\"}");
         return entity;
     }
 
     public static OrganizationEntity buildOrganization(MemberEntity memberEntity) {
-        String orgId = randomString();
         return OrganizationEntity.builder()
-                .id(orgId)
+                .id(randomString())
                 .createdAt(LocalDateTime.now())
                 .name(randomString())
                 .owner(randomString())
-                .party(orgId)
+                .party(randomString())
                 .members(Set.of(memberEntity))
                 .build();
     }
 
     public static OrganizationEntity buildOrganization(Set<MemberEntity> entities) {
-        String orgId = randomString();
         return OrganizationEntity.builder()
-                .id(orgId)
+                .id(randomString())
                 .createdAt(LocalDateTime.now())
                 .name(randomString())
                 .owner(randomString())
-                .party(orgId)
+                .party(randomString())
                 .members(entities)
                 .build();
     }

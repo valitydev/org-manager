@@ -38,7 +38,6 @@ class OrganizationConverterTest {
         // Then
         assertThat(entity.getId()).isNotEmpty();
         assertThat(entity.getParty()).isNotEmpty();
-        assertEquals(entity.getId(), entity.getParty());
         assertThat(entity.getCreatedAt()).isNotNull();
         assertEquals(organization.getName(), entity.getName());
         assertEquals("{\"a\":\"b\"}", entity.getMetadata());

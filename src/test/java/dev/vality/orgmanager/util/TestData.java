@@ -35,7 +35,7 @@ public class TestData {
                 .createdAt(LocalDateTime.now())
                 .name("name")
                 .owner("owner")
-                .party(organizationId)
+                .party("party")
                 .members(Set.of(member))
                 .build();
     }

@@ -35,6 +35,7 @@ public class TestData {
                 .createdAt(LocalDateTime.now())
                 .name("name")
                 .owner("owner")
+                .party(organizationId)
                 .members(Set.of(member))
                 .build();
     }

@@ -123,21 +123,25 @@ public abstract class TestObjectFactory {
     }
 
     public static OrganizationEntity buildOrganization(MemberEntity memberEntity) {
+        String orgId = randomString();
         return OrganizationEntity.builder()
-                .id(randomString())
+                .id(orgId)
                 .createdAt(LocalDateTime.now())
                 .name(randomString())
                 .owner(randomString())
+                .party(orgId)
                 .members(Set.of(memberEntity))
                 .build();
     }
 
     public static OrganizationEntity buildOrganization(Set<MemberEntity> entities) {
+        String orgId = randomString();
         return OrganizationEntity.builder()
-                .id(randomString())
+                .id(orgId)
                 .createdAt(LocalDateTime.now())
                 .name(randomString())
                 .owner(randomString())
+                .party(orgId)
                 .members(entities)
                 .build();
     }

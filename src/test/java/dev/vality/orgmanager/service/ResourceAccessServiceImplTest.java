@@ -63,12 +63,10 @@ class ResourceAccessServiceImplTest {
 
     @Test
     void checkOrgRights() {
-        String orgId = TestObjectFactory.randomString();
         ResourceDto resource = ResourceDto.builder()
-                .orgId(orgId)
+                .orgId(TestObjectFactory.randomString())
                 .build();
         when(bouncerService.havePrivileges(any(BouncerContextDto.class))).thenReturn(true);
-        when(organizationService.findById(orgId)).thenReturn(TestObjectFactory.buildOrganization());
 
         assertDoesNotThrow(() -> resourceAccessService.checkRights(resource));
     }
@@ -79,7 +77,7 @@ class ResourceAccessServiceImplTest {
                 .invitationToken(TestObjectFactory.randomString())
                 .build();
         when(bouncerService.havePrivileges(any(BouncerContextDto.class))).thenReturn(true);
-        when(organizationService.getPartyByInvitationToken(resource.getInvitationToken()))
+        when(organizationService.getOrgIdByInvitationToken(resource.getInvitationToken()))
                 .thenThrow(new ResourceNotFoundException());
 
         assertThrows(ResourceNotFoundException.class,
@@ -98,13 +96,11 @@ class ResourceAccessServiceImplTest {
 
     @Test
     void checkMemberRights() {
-        String orgId = TestObjectFactory.randomString();
         ResourceDto resource = ResourceDto.builder()
-                .orgId(orgId)
+                .orgId(TestObjectFactory.randomString())
                 .memberId(TestObjectFactory.randomString())
                 .build();
         when(bouncerService.havePrivileges(any(BouncerContextDto.class))).thenReturn(true);
-        when(organizationService.findById(orgId)).thenReturn(TestObjectFactory.buildOrganization());
 
         assertDoesNotThrow(() -> resourceAccessService.checkRights(resource));
     }

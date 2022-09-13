@@ -306,10 +306,10 @@ public class OrganizationService {
     }
 
     @Transactional(readOnly = true)
-    public String getPartyByInvitationToken(String token) {
+    public String getOrgIdByInvitationToken(String token) {
         InvitationEntity invitationEntity = invitationService.findByToken(token);
         OrganizationEntity organizationEntity = findById(invitationEntity.getOrganizationId());
-        return organizationEntity.getParty();
+        return organizationEntity.getId();
     }
 
     public OrganizationEntity findById(String orgId) {

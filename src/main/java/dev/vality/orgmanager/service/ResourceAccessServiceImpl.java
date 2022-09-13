@@ -1,7 +1,6 @@
 package dev.vality.orgmanager.service;
 
 import dev.vality.orgmanager.config.properties.AccessProperties;
-import dev.vality.orgmanager.entity.OrganizationEntity;
 import dev.vality.orgmanager.exception.AccessDeniedException;
 import dev.vality.orgmanager.service.dto.BouncerContextDto;
 import dev.vality.orgmanager.service.dto.InvitationDto;
@@ -45,15 +44,10 @@ public class ResourceAccessServiceImpl implements ResourceAccessService {
         }
         String callerMethodName = StackUtils.getCallerMethodName();
         BouncerContextDto bouncerContext = buildBouncerContextDto(resource, callerMethodName);
-        if (Objects.nonNull(resource.getOrgId())) {
-            log.info("Get organization by orgId: {}", resource.getOrgId());
-            OrganizationEntity organization = organizationService.findById(resource.getOrgId());
-            bouncerContext.setOrganizationId(organization.getParty());
-        }
         if (Objects.nonNull(resource.getInvitationToken())) {
             log.info("Get organization by invitation token");
-            String party = organizationService.getPartyByInvitationToken(resource.getInvitationToken());
-            bouncerContext.setOrganizationId(party);
+            String orgId = organizationService.getOrgIdByInvitationToken(resource.getInvitationToken());
+            bouncerContext.setOrganizationId(orgId);
         }
         if (Objects.nonNull(resource.getMemberRoleId())) {
             String memberRoleId = resource.getMemberRoleId();

@@ -19,13 +19,13 @@ public class OrganizationConverter {
 
     public OrganizationEntity toEntity(Organization organization, String ownerId) {
         String orgId = UUID.randomUUID().toString();
-        String partyId = UUID.randomUUID().toString();
         return OrganizationEntity.builder()
                 .id(orgId)
                 .createdAt(LocalDateTime.now())
                 .name(organization.getName())
                 .owner(ownerId)
-                .party(partyId)
+                // TODO [ggmaleva]: replace on unique id after introduce separate token generator
+                .party(ownerId)
                 .metadata(jsonMapper.toJson(organization.getMetadata()))
                 .build();
     }

@@ -236,7 +236,7 @@ public class OrganizationService {
     @Transactional
     public OrganizationMembership joinOrganization(String token, String userId, String userEmail) {
         InvitationEntity invitationEntity = invitationService.findByToken(token);
-        if (!userEmail.equals(invitationEntity.getInviteeContactEmail())) {
+        if (!userEmail.equalsIgnoreCase(invitationEntity.getInviteeContactEmail())) {
             log.error("joinOrganization() - error: user email = {} doesn't equals invitee email = {}",
                     userEmail, invitationEntity.getInviteeContactEmail());
             throw new AccessDeniedException(

@@ -1,5 +1,6 @@
 package dev.vality.orgmanager.util;
 
+import dev.vality.orgmanager.TestObjectFactory;
 import dev.vality.orgmanager.entity.InvitationEntity;
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
@@ -35,7 +36,7 @@ public class TestData {
                 .createdAt(LocalDateTime.now())
                 .name("name")
                 .owner("owner")
-                .party("party")
+                .party(TestObjectFactory.randomString())
                 .members(Set.of(member))
                 .build();
     }

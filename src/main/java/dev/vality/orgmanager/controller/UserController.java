@@ -27,7 +27,7 @@ public class UserController implements UserApi {
     public ResponseEntity<Void> cancelOrgMembership(
             String requestId,
             String orgId) {
-        log.info("Cancel org membership: orgId={}", orgId);
+        log.info("Cancel org membership: requestId={}, orgId={}", requestId, orgId);
         ResourceDto resource = ResourceDto.builder()
                 .orgId(orgId)
                 .build();
@@ -40,7 +40,7 @@ public class UserController implements UserApi {
     public ResponseEntity<OrganizationMembership> inquireOrgMembership(
             String requestId,
             String orgId) {
-        log.info("Inquire org membership: orgId={}", orgId);
+        log.info("Inquire org membership: requestId={}, orgId={}", requestId, orgId);
         ResourceDto resource = ResourceDto.builder()
                 .orgId(orgId)
                 .build();
@@ -53,7 +53,7 @@ public class UserController implements UserApi {
     public ResponseEntity<OrganizationMembership> joinOrg(
             String requestId,
             OrganizationJoinRequest body) {
-        log.info("Join organization: body={}", body);
+        log.info("Join organization: requestId={}, body ={}", requestId, body);
         ResourceDto resource = ResourceDto.builder()
                 .invitationToken(body.getInvitation())
                 .build();
@@ -67,7 +67,8 @@ public class UserController implements UserApi {
     public ResponseEntity<OrganizationSearchResult> listOrgMembership(String requestId,
                                                                       Integer limit,
                                                                       String continuationToken) {
-        log.info("List org membership: limit={}, continuationToken={}", limit, continuationToken);
+        log.info("List org membership: requestId={}, limit={}, continuationToken={}",
+                requestId, limit, continuationToken);
         resourceAccessService.checkRights();
         AccessToken accessToken = keycloakService.getAccessToken();
         OrganizationSearchResult organizationSearchResult =

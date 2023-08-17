@@ -35,10 +35,12 @@
         <dependency>
             <groupId>dev.vality.woody</groupId>
             <artifactId>woody-thrift</artifactId>
+            <version>${woody.version}</version>
         </dependency>
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>shared-resources</artifactId>
+            <version>${shared-resources.version}</version>
         </dependency>
         <dependency>
             <groupId>dev.vality</groupId>

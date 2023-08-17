@@ -1,5 +1,5 @@
 server:
-  port: '@server.port@'
+  port: ${server.port}
   rest:
     port: '@server.rest.port@'
 
@@ -7,7 +7,7 @@ management:
   security:
     flag: false
   server:
-    port: '@management.port@'
+    port: ${management.port}
   metrics:
     export:
       prometheus:

@@ -11,6 +11,7 @@ import dev.vality.orgmanager.entity.OrganizationEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,8 +49,12 @@ public class BouncerContextConverter {
     public OrgRole toOrgRole(MemberRoleEntity entity) {
         return new OrgRole()
                 .setId(entity.getRoleId())
-                .setScope(new OrgRoleScope()
-                        .setShop(new Entity().setId(entity.getResourceId())));
+                .setScope(Objects.nonNull(entity.getResourceId())
+                        ? new OrgRoleScope()
+                        .setShop(
+                                new Entity()
+                                        .setId(entity.getResourceId()))
+                        : null);
 
     }
 }

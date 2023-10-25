@@ -47,6 +47,23 @@ class BouncerContextConverterTest {
     }
 
     @Test
+    void shouldConvertToOrgRoleWithoutScope() {
+        MemberRoleEntity entity = MemberRoleEntity.builder()
+                .id("id")
+                .roleId("Administrator")
+                .organizationId("org")
+                .build();
+
+        OrgRole actual = converter.toOrgRole(entity);
+
+        OrgRole expected = new OrgRole()
+                .setId(RoleId.ADMINISTRATOR.getValue())
+                .setScope(null);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
     void shouldConvertToMember() {
         Set<OrganizationEntity> organizationEntities = Set.of(TestObjectFactory.buildOrganization());
         MemberEntity memberEntity = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());

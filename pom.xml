@@ -24,7 +24,7 @@
         <server.rest.port>8080</server.rest.port>
         <management.port>8023</management.port>
         <exposed.ports>${server.port} ${server.rest.port} ${management.port}</exposed.ports>
-        <spring-security.version>5.6.2</spring-security.version>
+        <spring-security.version>5.6.12</spring-security.version>
         <keycloak.version>17.0.0</keycloak.version>
         <schedlock.version>4.34.0</schedlock.version>
         <swag.organizations.version>1.19-8707f87-server</swag.organizations.version>
@@ -71,6 +71,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.yaml</groupId>
+                    <artifactId>snakeyaml</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -186,7 +192,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.3.3</version>
+            <version>42.4.3</version>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -195,12 +201,17 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>31.1-jre</version>
+            <version>32.0.0-jre</version>
         </dependency>
         <dependency>
             <groupId>org.openapitools</groupId>
             <artifactId>jackson-databind-nullable</artifactId>
             <version>0.2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>2.0</version>
         </dependency>
 
 

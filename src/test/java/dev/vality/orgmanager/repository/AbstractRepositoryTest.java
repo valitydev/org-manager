@@ -1,26 +1,26 @@
 package dev.vality.orgmanager.repository;
 
 import dev.vality.orgmanager.OrgManagerApplication;
-import org.junit.ClassRule;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.util.TestPropertyValues;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
-
-import java.time.Duration;
+import org.testcontainers.utility.DockerImageName;
 
 @ActiveProfiles("test")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = {OrgManagerApplication.class})
-@ContextConfiguration(initializers = InvitationRepositoryTest.Initializer.class)
 public abstract class AbstractRepositoryTest {
+
+    private static final String POSTGRESQL_IMAGE_NAME = "postgres";
+    private static final String POSTGRESQL_VERSION = "13.6";
 
     @Autowired
     protected InvitationRepository invitationRepository;
@@ -54,24 +54,34 @@ public abstract class AbstractRepositoryTest {
         organizationRoleRepository.deleteAll();
     }
 
-    @ClassRule
-    @SuppressWarnings("rawtypes")
-    public static PostgreSQLContainer postgres = new PostgreSQLContainer<>("postgres:13.6")
-            .withStartupTimeout(Duration.ofMinutes(5));
+    @BeforeAll
+    static void beforeAll() {
+        TestPropertyValues.of(
+                "spring.datasource.url=" + postgres.getJdbcUrl(),
+                "spring.datasource.username=" + postgres.getUsername(),
+                "spring.datasource.password=" + postgres.getPassword(),
+                "spring.flyway.url=" + postgres.getJdbcUrl(),
+                "spring.flyway.user=" + postgres.getUsername(),
+                "spring.flyway.password=" + postgres.getPassword());
 
-    public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-        @Override
-        public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
-            postgres.start();
-            TestPropertyValues.of(
-                    "spring.datasource.url=" + postgres.getJdbcUrl(),
-                    "spring.datasource.username=" + postgres.getUsername(),
-                    "spring.datasource.password=" + postgres.getPassword(),
-                    "spring.flyway.url=" + postgres.getJdbcUrl(),
-                    "spring.flyway.user=" + postgres.getUsername(),
-                    "spring.flyway.password=" + postgres.getPassword())
-                    .and(configurableApplicationContext.getEnvironment().getActiveProfiles())
-                    .applyTo(configurableApplicationContext);
-        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    static PostgreSQLContainer postgres = new PostgreSQLContainer<>(DockerImageName
+            .parse(POSTGRESQL_IMAGE_NAME)
+            .withTag(POSTGRESQL_VERSION));
+
+    static {
+        postgres.start();
+    }
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.flyway.url", postgres::getJdbcUrl);
+        registry.add("spring.flyway.user", postgres::getUsername);
+        registry.add("spring.flyway.password", postgres::getPassword);
     }
 }

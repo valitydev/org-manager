@@ -115,7 +115,7 @@ public class UserControllerTest extends AbstractControllerTest {
         assertEquals(savedOrg.getId(), organizationMembership.getOrg().getId());
         assertEquals(userId, organizationMembership.getMember().getId());
         List<String> actualRoles =
-                organizationMembership.getMember().getRoles().stream().map(MemberRole::getRoleId).map(RoleId::getValue)
+                organizationMembership.getMember().getRoles().stream().map(MemberRole::getRoleId)
                         .collect(Collectors.toList());
         List<String> expectedRoles = savedInvitation.getInviteeRoles().stream().map(MemberRoleEntity::getRoleId)
                 .collect(Collectors.toList());
@@ -147,7 +147,7 @@ public class UserControllerTest extends AbstractControllerTest {
         assertEquals(savedOrg.getId(), organizationMembership.getOrg().getId());
         assertEquals(userId, organizationMembership.getMember().getId());
         List<String> actualRoles =
-                organizationMembership.getMember().getRoles().stream().map(MemberRole::getRoleId).map(RoleId::getValue)
+                organizationMembership.getMember().getRoles().stream().map(MemberRole::getRoleId)
                         .collect(Collectors.toList());
         List<String> expectedRoles = savedInvitation.getInviteeRoles().stream().map(MemberRoleEntity::getRoleId)
                 .collect(Collectors.toList());

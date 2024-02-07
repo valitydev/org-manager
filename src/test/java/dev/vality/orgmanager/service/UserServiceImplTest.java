@@ -6,7 +6,6 @@ import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
 import dev.vality.orgmanager.repository.AbstractRepositoryTest;
 import dev.vality.orgmanager.service.model.UserInfo;
-import dev.vality.swag.organizations.model.RoleId;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -14,9 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class UserServiceImplTest extends AbstractRepositoryTest {
 
@@ -65,7 +62,7 @@ class UserServiceImplTest extends AbstractRepositoryTest {
         String memberId = TestObjectFactory.randomString();
         var member = TestObjectFactory.testMemberEntity(memberId);
         OrganizationEntity organization = TestObjectFactory.buildOrganization(member);
-        MemberRoleEntity memberRole = TestObjectFactory.buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity memberRole = TestObjectFactory.buildMemberRole("Accountant", organization.getId());
         memberRoleRepository.save(memberRole);
         member.setRoles(Set.of(memberRole));
         memberRepository.save(member);
@@ -84,7 +81,7 @@ class UserServiceImplTest extends AbstractRepositoryTest {
         String memberId = TestObjectFactory.randomString();
         var member = TestObjectFactory.testMemberEntity(memberId);
         OrganizationEntity organization = TestObjectFactory.buildOrganization(member);
-        MemberRoleEntity memberRole = TestObjectFactory.buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity memberRole = TestObjectFactory.buildMemberRole("Accountant", organization.getId());
         OrganizationEntity ownedOrganization = TestObjectFactory.buildOrganization();
         ownedOrganization.setOwner(memberId);
         memberRoleRepository.save(memberRole);
@@ -111,9 +108,9 @@ class UserServiceImplTest extends AbstractRepositoryTest {
         OrganizationEntity organization = TestObjectFactory.buildOrganization(member);
         organization.setOwner(memberId);
         organization.setRoles(
-                Set.of(TestObjectFactory.buildOrganizationRole(RoleId.ACCOUNTANT, organization.getId()))
+                Set.of(TestObjectFactory.buildOrganizationRole("Accountant", organization.getId()))
         );
-        MemberRoleEntity memberRole = TestObjectFactory.buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity memberRole = TestObjectFactory.buildMemberRole("Accountant", organization.getId());
         memberRoleRepository.save(memberRole);
         member.setRoles(Set.of(memberRole));
         memberRepository.save(member);

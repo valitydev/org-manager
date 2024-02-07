@@ -39,16 +39,16 @@ public class OrganizationServiceIntegrationTest extends AbstractRepositoryTest {
         // Given
         MemberEntity member = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(member);
-        MemberRoleEntity nonActiveRoleInOrg = buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity nonActiveRoleInOrg = buildMemberRole("Accountant", organization.getId());
         nonActiveRoleInOrg.setActive(Boolean.FALSE);
         MemberRoleEntity savedMemberRoleNonActiveInOrg = memberRoleRepository.save(nonActiveRoleInOrg);
-        MemberRoleEntity activeRoleInOrg = buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity activeRoleInOrg = buildMemberRole("Accountant", organization.getId());
         activeRoleInOrg.setActive(Boolean.TRUE);
         MemberRoleEntity savedMemberRoleInOrg =
                 memberRoleRepository.save(activeRoleInOrg);
         MemberRoleEntity savedMemberRoleInAnotherOrg =
                 memberRoleRepository
-                        .save(TestObjectFactory.buildMemberRole(RoleId.ACCOUNTANT, TestObjectFactory.randomString()));
+                        .save(TestObjectFactory.buildMemberRole("Accountant", TestObjectFactory.randomString()));
         member.setRoles(Set.of(savedMemberRoleNonActiveInOrg, savedMemberRoleInOrg, savedMemberRoleInAnotherOrg));
         MemberEntity savedMember = memberRepository.save(member);
         OrganizationEntity savedOrganization = organizationRepository.save(organization);
@@ -70,7 +70,7 @@ public class OrganizationServiceIntegrationTest extends AbstractRepositoryTest {
     void shouldThrowAccessDeniedExceptionOnJoinOrgTest() {
         MemberEntity memberEntity = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(memberEntity);
-        MemberRoleEntity memberRole = buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity memberRole = buildMemberRole("Accountant", organization.getId());
         memberRole.setActive(Boolean.FALSE);
         MemberRoleEntity savedMemberRole = memberRoleRepository.save(memberRole);
         memberEntity.setRoles(Set.of(savedMemberRole));
@@ -97,7 +97,7 @@ public class OrganizationServiceIntegrationTest extends AbstractRepositoryTest {
         alreadyAcceptedInvitation.setAcceptedMemberId(TestObjectFactory.randomString());
         alreadyAcceptedInvitation.setStatus(InvitationStatusName.ACCEPTED.getValue());
         invitationRepository.save(alreadyAcceptedInvitation);
-        MemberRoleEntity memberRole = buildMemberRole(RoleId.ACCOUNTANT, savedOrganization.getId());
+        MemberRoleEntity memberRole = buildMemberRole("Accountant", savedOrganization.getId());
         memberRole.setActive(Boolean.FALSE);
         MemberRoleEntity savedMemberRole = memberRoleRepository.save(memberRole);
         memberEntity.setRoles(Set.of(savedMemberRole));
@@ -114,7 +114,7 @@ public class OrganizationServiceIntegrationTest extends AbstractRepositoryTest {
     void shouldJoinExistMember() {
         MemberEntity memberEntity = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(memberEntity);
-        MemberRoleEntity memberRole = buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity memberRole = buildMemberRole("Accountant", organization.getId());
         memberRole.setActive(Boolean.FALSE);
         MemberRoleEntity savedMemberRole = memberRoleRepository.save(memberRole);
         memberEntity.setRoles(Set.of(savedMemberRole));
@@ -130,7 +130,6 @@ public class OrganizationServiceIntegrationTest extends AbstractRepositoryTest {
         assertEquals(savedMember.getId(), organizationMembership.getMember().getId());
         List<String> actualRoles = organizationMembership.getMember().getRoles().stream()
                 .map(MemberRole::getRoleId)
-                .map(RoleId::getValue)
                 .collect(Collectors.toList());
         List<String> expectedRoles = savedInvitation.getInviteeRoles().stream()
                 .map(MemberRoleEntity::getRoleId)
@@ -155,7 +154,6 @@ public class OrganizationServiceIntegrationTest extends AbstractRepositoryTest {
         assertEquals(userId, organizationMembership.getMember().getId());
         List<String> actualRoles = organizationMembership.getMember().getRoles().stream()
                 .map(MemberRole::getRoleId)
-                .map(RoleId::getValue)
                 .collect(Collectors.toList());
         List<String> expectedRoles = savedInvitation.getInviteeRoles().stream()
                 .map(MemberRoleEntity::getRoleId)
@@ -171,7 +169,7 @@ public class OrganizationServiceIntegrationTest extends AbstractRepositoryTest {
     void shouldExpelOrgMember() {
         MemberEntity member = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(member);
-        MemberRoleEntity activeRoleInOrg = buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity activeRoleInOrg = buildMemberRole("Accountant", organization.getId());
         activeRoleInOrg.setActive(Boolean.TRUE);
         MemberRoleEntity savedMemberRole = memberRoleRepository.save(activeRoleInOrg);
         member.setRoles(Set.of(savedMemberRole));
@@ -197,7 +195,7 @@ public class OrganizationServiceIntegrationTest extends AbstractRepositoryTest {
     void shouldNotReturnOrganizationsAfterExpelOrgMember() {
         MemberEntity member = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(member);
-        MemberRoleEntity activeRoleInOrg = buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity activeRoleInOrg = buildMemberRole("Accountant", organization.getId());
         activeRoleInOrg.setActive(Boolean.TRUE);
         MemberRoleEntity savedMemberRole = memberRoleRepository.save(activeRoleInOrg);
         member.setRoles(Set.of(savedMemberRole));
@@ -223,20 +221,20 @@ public class OrganizationServiceIntegrationTest extends AbstractRepositoryTest {
         MemberEntity member1 = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         MemberEntity member2 = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(Set.of(member1, member2));
-        MemberRoleEntity activeMember1RoleInOrg = buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity activeMember1RoleInOrg = buildMemberRole("Accountant", organization.getId());
         activeMember1RoleInOrg.setActive(Boolean.TRUE);
         MemberRoleEntity savedMember1Role = memberRoleRepository.save(activeMember1RoleInOrg);
         member1.setRoles(Set.of(savedMember1Role));
-        MemberRoleEntity activeMember2RoleInOrg = buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity activeMember2RoleInOrg = buildMemberRole("Accountant", organization.getId());
         activeMember2RoleInOrg.setActive(Boolean.TRUE);
         MemberRoleEntity savedActiveMember2Role = memberRoleRepository.save(activeMember2RoleInOrg);
-        MemberRoleEntity nonActiveMember2RoleInOrg = buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity nonActiveMember2RoleInOrg = buildMemberRole("Accountant", organization.getId());
         nonActiveMember2RoleInOrg.setActive(Boolean.FALSE);
         MemberRoleEntity savedNonActiveMember2Role = memberRoleRepository.save(nonActiveMember2RoleInOrg);
         member2.setRoles(Set.of(savedActiveMember2Role, savedNonActiveMember2Role));
         MemberEntity anotherMember = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity anotherOrganization = TestObjectFactory.buildOrganization(Set.of(anotherMember));
-        MemberRoleEntity activeAnotherMemberRoleInOrg = buildMemberRole(RoleId.ACCOUNTANT, anotherOrganization.getId());
+        MemberRoleEntity activeAnotherMemberRoleInOrg = buildMemberRole("Accountant", anotherOrganization.getId());
         activeAnotherMemberRoleInOrg.setActive(Boolean.TRUE);
         MemberRoleEntity savedAnotherRole = memberRoleRepository.save(activeAnotherMemberRoleInOrg);
         anotherMember.setRoles(Set.of(savedAnotherRole));
@@ -265,7 +263,7 @@ public class OrganizationServiceIntegrationTest extends AbstractRepositoryTest {
         MemberEntity member = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(member);
         MemberRoleEntity role =
-                memberRoleRepository.save(TestObjectFactory.buildMemberRole(RoleId.ACCOUNTANT, organization.getId()));
+                memberRoleRepository.save(TestObjectFactory.buildMemberRole("Accountant", organization.getId()));
         member.setRoles(Set.of(role));
         MemberEntity savedMember = memberRepository.save(member);
         OrganizationEntity savedOrganization = organizationRepository.save(organization);
@@ -281,9 +279,9 @@ public class OrganizationServiceIntegrationTest extends AbstractRepositoryTest {
         MemberEntity memberEntity = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(memberEntity);
         MemberRoleEntity role =
-                memberRoleRepository.save(TestObjectFactory.buildMemberRole(RoleId.ACCOUNTANT, organization.getId()));
+                memberRoleRepository.save(TestObjectFactory.buildMemberRole("Accountant", organization.getId()));
         MemberRoleEntity roleToRemove =
-                memberRoleRepository.save(TestObjectFactory.buildMemberRole(RoleId.MANAGER, organization.getId()));
+                memberRoleRepository.save(TestObjectFactory.buildMemberRole("Manager", organization.getId()));
         memberEntity.setRoles(Set.of(role, roleToRemove));
         MemberEntity savedMember = memberRepository.save(memberEntity);
         OrganizationEntity savedOrganization = organizationRepository.save(organization);

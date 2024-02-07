@@ -23,7 +23,7 @@ public class TestData {
                 .id(memberId)
                 .email("email")
                 .roles(Set.of(MemberRoleEntity.builder()
-                        .id(RoleId.ADMINISTRATOR.getValue())
+                        .id("Accountant")
                         .organizationId(organizationId)
                         .roleId("Accountant")
                         .scopeId("Shop")
@@ -67,14 +67,14 @@ public class TestData {
                 .inviteeRoles(Set.of(
                         MemberRoleEntity.builder()
                                 .id("role1")
-                                .roleId(RoleId.ADMINISTRATOR.getValue())
+                                .roleId("Administrator")
                                 .resourceId("resource1")
                                 .scopeId(ResourceScopeId.SHOP.getValue())
                                 .organizationId(organizationId)
                                 .build(),
                         MemberRoleEntity.builder()
                                 .id("role2")
-                                .roleId(RoleId.MANAGER.getValue())
+                                .roleId("Manager")
                                 .resourceId("resource2")
                                 .scopeId(ResourceScopeId.SHOP.getValue())
                                 .organizationId(organizationId)
@@ -100,7 +100,7 @@ public class TestData {
 
     public static MemberRole buildMemberRole() {
         MemberRole memberRole = new MemberRole();
-        memberRole.setRoleId(RoleId.ADMINISTRATOR);
+        memberRole.setRoleId("Administrator");
         MemberRoleScope memberRoleScope = new MemberRoleScope();
         memberRoleScope.setId(ResourceScopeId.SHOP);
         memberRoleScope.setResourceId("testResourceIdKek");

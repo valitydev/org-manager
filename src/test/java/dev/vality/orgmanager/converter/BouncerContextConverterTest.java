@@ -8,7 +8,6 @@ import dev.vality.orgmanager.TestObjectFactory;
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
-import dev.vality.swag.organizations.model.RoleId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,7 +38,7 @@ class BouncerContextConverterTest {
         OrgRole actual = converter.toOrgRole(entity);
 
         OrgRole expected = new OrgRole()
-                .setId(RoleId.ADMINISTRATOR.getValue())
+                .setId("Administrator")
                 .setScope(new OrgRoleScope()
                         .setShop(new Entity().setId("resource")));
 
@@ -57,7 +56,7 @@ class BouncerContextConverterTest {
         OrgRole actual = converter.toOrgRole(entity);
 
         OrgRole expected = new OrgRole()
-                .setId(RoleId.ADMINISTRATOR.getValue())
+                .setId("Administrator")
                 .setScope(null);
 
         assertEquals(expected, actual);
@@ -91,7 +90,7 @@ class BouncerContextConverterTest {
     void shouldConvertToOrganizationWithoutRolesAnotherOrganization() {
         OrganizationEntity organizationEntity = TestObjectFactory.buildOrganization();
         MemberRoleEntity memberRoleEntity =
-                TestObjectFactory.buildMemberRole(RoleId.ADMINISTRATOR, TestObjectFactory.randomString());
+                TestObjectFactory.buildMemberRole("Administrator", TestObjectFactory.randomString());
 
         var organization = converter.toOrganization(organizationEntity, Set.of(memberRoleEntity));
 
@@ -105,7 +104,7 @@ class BouncerContextConverterTest {
     void shouldConvertToOrganization() {
         OrganizationEntity organizationEntity = TestObjectFactory.buildOrganization();
         MemberRoleEntity memberRoleEntity =
-                TestObjectFactory.buildMemberRole(RoleId.ADMINISTRATOR, organizationEntity.getId());
+                TestObjectFactory.buildMemberRole("Administrator", organizationEntity.getId());
 
         var organization = converter.toOrganization(organizationEntity, Set.of(memberRoleEntity));
 

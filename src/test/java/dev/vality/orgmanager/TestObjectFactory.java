@@ -89,7 +89,7 @@ public abstract class TestObjectFactory {
 
     public static MemberRole testMemberRole() {
         MemberRole memberRole = new MemberRole();
-        memberRole.setRoleId(RoleId.MANAGER);
+        memberRole.setRoleId("Manager");
         return memberRole;
     }
 
@@ -165,15 +165,15 @@ public abstract class TestObjectFactory {
                 .organizationId(orgId)
                 .status("Pending")
                 .inviteeRoles(Set.of(
-                        buildMemberRole(RoleId.ADMINISTRATOR, orgId),
-                        buildMemberRole(RoleId.ACCOUNTANT, orgId)))
+                        buildMemberRole("Administrator", orgId),
+                        buildMemberRole("Accountant", orgId)))
                 .build();
     }
 
-    public static MemberRoleEntity buildMemberRole(RoleId role, String orgId) {
+    public static MemberRoleEntity buildMemberRole(String role, String orgId) {
         return MemberRoleEntity.builder()
                 .id(randomString())
-                .roleId(role.getValue())
+                .roleId(role)
                 .resourceId(randomString())
                 .scopeId(ResourceScopeId.SHOP.getValue())
                 .organizationId(orgId)
@@ -181,10 +181,10 @@ public abstract class TestObjectFactory {
                 .build();
     }
 
-    public static OrganizationRoleEntity buildOrganizationRole(RoleId role, String orgId) {
+    public static OrganizationRoleEntity buildOrganizationRole(String role, String orgId) {
         return OrganizationRoleEntity.builder()
                 .id(randomString())
-                .roleId(role.getValue())
+                .roleId(role)
                 .organizationId(orgId)
                 .name(randomString())
                 .build();

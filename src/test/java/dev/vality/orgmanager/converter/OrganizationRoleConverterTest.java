@@ -4,7 +4,6 @@ import dev.vality.orgmanager.entity.OrganizationRoleEntity;
 import dev.vality.orgmanager.entity.ScopeEntity;
 import dev.vality.swag.organizations.model.ResourceScopeId;
 import dev.vality.swag.organizations.model.Role;
-import dev.vality.swag.organizations.model.RoleId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +39,7 @@ class OrganizationRoleConverterTest {
 
         // Then
         Role expected = new Role()
-                .id(RoleId.ADMINISTRATOR)
+                .id("Administrator")
                 .name("name")
                 .scopes(List.of(ResourceScopeId.SHOP));
 

@@ -4,7 +4,6 @@ import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.swag.organizations.model.MemberRole;
 import dev.vality.swag.organizations.model.MemberRoleScope;
 import dev.vality.swag.organizations.model.ResourceScopeId;
-import dev.vality.swag.organizations.model.RoleId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +22,7 @@ class MemberRoleConverterTest {
     void shouldConvertToEntityWithoutScope() {
         // Given
         MemberRole role = new MemberRole()
-                .roleId(RoleId.ADMINISTRATOR);
+                .roleId("Administrator");
 
         // When
         MemberRoleEntity entity = converter.toEntity(role, "org");
@@ -45,7 +44,7 @@ class MemberRoleConverterTest {
     void shouldConvertToEntity() {
         // Given
         MemberRole role = new MemberRole()
-                .roleId(RoleId.ADMINISTRATOR)
+                .roleId("Administrator")
                 .scope(new MemberRoleScope()
                         .resourceId("resource")
                         .id(ResourceScopeId.SHOP));
@@ -84,7 +83,7 @@ class MemberRoleConverterTest {
         // Then
         MemberRole expected = new MemberRole()
                 .id(entity.getId())
-                .roleId(RoleId.ADMINISTRATOR);
+                .roleId("Administrator");
 
         assertThat(role).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -106,7 +105,7 @@ class MemberRoleConverterTest {
         // Then
         MemberRole expected = new MemberRole()
                 .id(entity.getId())
-                .roleId(RoleId.ADMINISTRATOR)
+                .roleId("Administrator")
                 .scope(new MemberRoleScope()
                         .resourceId("resource")
                         .id(ResourceScopeId.SHOP));

@@ -5,7 +5,6 @@ import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
 import dev.vality.swag.organizations.model.MemberRole;
 import dev.vality.swag.organizations.model.MemberRoleScope;
 import dev.vality.swag.organizations.model.ResourceScopeId;
-import dev.vality.swag.organizations.model.RoleId;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -36,7 +35,7 @@ public class MemberRoleConverter {
                 .orElse(null);
         return new MemberRole()
                 .id(entity.getId())
-                .roleId(RoleId.fromValue(entity.getRoleId()))
+                .roleId(entity.getRoleId())
                 .scope(memberRoleScope);
     }
 
@@ -49,7 +48,7 @@ public class MemberRoleConverter {
                 .orElse(null);
         return new MemberRole()
                 .id(memberWithRoleDto.getMemberRoleId())
-                .roleId(RoleId.fromValue(memberWithRoleDto.getRoleId()))
+                .roleId(memberWithRoleDto.getRoleId())
                 .scope(memberRoleScope);
     }
 }

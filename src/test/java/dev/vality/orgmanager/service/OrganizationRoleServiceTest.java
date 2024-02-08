@@ -8,7 +8,6 @@ import dev.vality.orgmanager.repository.OrganizationRepository;
 import dev.vality.orgmanager.repository.OrganizationRoleRepository;
 import dev.vality.swag.organizations.model.Role;
 import dev.vality.swag.organizations.model.RoleAvailableListResult;
-import dev.vality.swag.organizations.model.RoleId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -85,10 +84,10 @@ public class OrganizationRoleServiceTest {
         OrganizationRoleEntity organizationRoleEntity = new OrganizationRoleEntity();
         Role role = new Role();
         String orgId = "orgId";
-        RoleId roleId = RoleId.ADMINISTRATOR;
+        String roleId = "Administrator";
         when(organizationRepository.existsById(orgId))
                 .thenReturn(true);
-        when(organizationRoleRepository.findByOrganizationIdAndRoleId(orgId, roleId.getValue()))
+        when(organizationRoleRepository.findByOrganizationIdAndRoleId(orgId, roleId))
                 .thenReturn(Optional.of(organizationRoleEntity));
         when(organizationRoleConverter.toDomain(organizationRoleEntity))
                 .thenReturn(role);
@@ -102,7 +101,7 @@ public class OrganizationRoleServiceTest {
     @Test
     void shouldReturnNotFoundIfOrganizationDoesNotExist() {
         String orgId = "orgId";
-        RoleId roleId = RoleId.ADMINISTRATOR;
+        String roleId = "Administrator";
         when(organizationRepository.existsById(orgId))
                 .thenReturn(false);
 

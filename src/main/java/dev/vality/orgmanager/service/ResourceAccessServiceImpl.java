@@ -56,7 +56,7 @@ public class ResourceAccessServiceImpl implements ResourceAccessService {
             MemberRoleScope scope = memberRole.getScope();
             bouncerContext.setRole(RoleDto.builder()
                     .scopeResourceId(Objects.nonNull(scope) ? scope.getResourceId() : null)
-                    .roleId(memberRole.getRoleId().getValue())
+                    .roleId(memberRole.getRoleId())
                     .build());
         }
         callBouncer(callerMethodName, bouncerContext);

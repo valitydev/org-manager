@@ -8,7 +8,6 @@ import dev.vality.orgmanager.service.dto.BouncerContextDto;
 import dev.vality.orgmanager.service.dto.ResourceDto;
 import dev.vality.swag.organizations.model.MemberRole;
 import dev.vality.swag.organizations.model.MemberRoleScope;
-import dev.vality.swag.organizations.model.RoleId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -138,7 +137,7 @@ class ResourceAccessServiceImplTest {
         when(memberRoleService.findById(resource.getMemberRoleId()))
                 .thenReturn(
                         new MemberRole()
-                                .roleId(RoleId.MANAGER)
+                                .roleId("Manager")
                                 .scope(new MemberRoleScope().resourceId(TestObjectFactory.randomString()))
                 );
 

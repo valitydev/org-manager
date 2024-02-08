@@ -46,7 +46,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>swag-organizations</artifactId>
-            <version>1.22-cd6cc10-server</version>
+            <version>1.25-de0cd06-server</version>
         </dependency>
         <dependency>
             <groupId>dev.vality</groupId>

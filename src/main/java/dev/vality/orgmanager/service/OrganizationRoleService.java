@@ -8,7 +8,6 @@ import dev.vality.orgmanager.repository.OrganizationRepository;
 import dev.vality.orgmanager.repository.OrganizationRoleRepository;
 import dev.vality.swag.organizations.model.Role;
 import dev.vality.swag.organizations.model.RoleAvailableListResult;
-import dev.vality.swag.organizations.model.RoleId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-
-import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -27,12 +24,12 @@ public class OrganizationRoleService {
     private final OrganizationRoleRepository organizationRoleRepository;
     private final OrganizationRoleConverter organizationRoleConverter;
 
-    public Role get(String orgId, RoleId roleId) {
+    public Role get(String orgId, String roleId) {
         if (!organizationRepository.existsById(orgId)) {
             throw new ResourceNotFoundException();
         }
         OrganizationRoleEntity entity =
-                organizationRoleRepository.findByOrganizationIdAndRoleId(orgId, roleId.toString())
+                organizationRoleRepository.findByOrganizationIdAndRoleId(orgId, roleId)
                         .orElseThrow(ResourceNotFoundException::new);
 
         return organizationRoleConverter.toDomain(entity);
@@ -50,7 +47,7 @@ public class OrganizationRoleService {
         List<Role> roles = entity.orElseThrow().getRoles()
                 .stream()
                 .map(organizationRoleConverter::toDomain)
-                .collect(toList());
+                .toList();
 
         return ResponseEntity
                 .status(HttpStatus.OK)

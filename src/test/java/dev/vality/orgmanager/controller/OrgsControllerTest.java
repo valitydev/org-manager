@@ -10,7 +10,6 @@ import dev.vality.orgmanager.service.dto.ResourceDto;
 import dev.vality.orgmanager.util.TestData;
 import dev.vality.swag.organizations.model.InvitationRequest;
 import dev.vality.swag.organizations.model.MemberRole;
-import dev.vality.swag.organizations.model.RoleId;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,7 +80,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
 
         MemberEntity memberEntity = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(memberEntity);
-        MemberRoleEntity memberRoleEntity = TestObjectFactory.buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity memberRoleEntity = TestObjectFactory.buildMemberRole("Accountant", organization.getId());
         MemberRoleEntity savedMemberRole = memberRoleRepository.save(
                 memberRoleEntity);
         memberEntity.setRoles(Set.of(savedMemberRole));
@@ -91,13 +90,13 @@ public class OrgsControllerTest extends AbstractControllerTest {
         MemberRole memberRole = TestData.buildMemberRole();
 
         mockMvc.perform(post(String.format("/orgs/%s/members/%s/roles", savedOrganization.getId(), savedMember.getId()))
-                .contentType("application/json")
-                .content(objectMapper.writeValueAsString(memberRole))
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
-                .header("X-Request-ID", "testRequestId"))
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(memberRole))
+                        .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                        .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
-                .andExpect(jsonPath("$.roleId", equalTo(memberRole.getRoleId().getValue())))
+                .andExpect(jsonPath("$.roleId", equalTo(memberRole.getRoleId())))
                 .andExpect(jsonPath("$.scope.id", equalTo(memberRole.getScope().getId().getValue())))
                 .andExpect(jsonPath("$.scope.resourceId", equalTo(memberRole.getScope().getResourceId())));
 
@@ -110,7 +109,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
         MemberEntity member = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(member);
         MemberRoleEntity savedMemberRole =
-                memberRoleRepository.save(TestObjectFactory.buildMemberRole(RoleId.ACCOUNTANT, organization.getId()));
+                memberRoleRepository.save(TestObjectFactory.buildMemberRole("Accountant", organization.getId()));
         member.setRoles(Set.of(savedMemberRole));
         MemberEntity savedMember = memberRepository.save(member);
         OrganizationEntity savedOrganization = organizationRepository.save(organization);
@@ -133,7 +132,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
     void removeMemberRoleWithOnlyOneRole() throws Exception {
         MemberEntity memberEntity = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(memberEntity);
-        MemberRoleEntity memberRoleEntity = TestObjectFactory.buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
+        MemberRoleEntity memberRoleEntity = TestObjectFactory.buildMemberRole("Accountant", organization.getId());
         MemberRoleEntity savedMemberRole = memberRoleRepository.save(
                 memberRoleEntity);
         memberEntity.setRoles(Set.of(savedMemberRole));
@@ -155,8 +154,8 @@ public class OrgsControllerTest extends AbstractControllerTest {
     void removeMemberRole() throws Exception {
         MemberEntity memberEntity = TestObjectFactory.testMemberEntity(TestObjectFactory.randomString());
         OrganizationEntity organization = TestObjectFactory.buildOrganization(memberEntity);
-        MemberRoleEntity memberRoleEntity = TestObjectFactory.buildMemberRole(RoleId.ACCOUNTANT, organization.getId());
-        MemberRoleEntity roleToRemove = TestObjectFactory.buildMemberRole(RoleId.MANAGER, organization.getId());
+        MemberRoleEntity memberRoleEntity = TestObjectFactory.buildMemberRole("Accountant", organization.getId());
+        MemberRoleEntity roleToRemove = TestObjectFactory.buildMemberRole("Manager", organization.getId());
         List<MemberRoleEntity> roles = memberRoleRepository.saveAll(List.of(
                 memberRoleEntity, roleToRemove));
         memberEntity.setRoles(new HashSet<>(roles));
@@ -164,9 +163,9 @@ public class OrgsControllerTest extends AbstractControllerTest {
         OrganizationEntity savedOrganization = organizationRepository.save(organization);
 
         mockMvc.perform(delete(
-                String.format("/orgs/%s/members/%s/roles/%s", savedOrganization.getId(), savedMember.getId(),
-                        roleToRemove.getId())
-        )
+                        String.format("/orgs/%s/members/%s/roles/%s", savedOrganization.getId(), savedMember.getId(),
+                                roleToRemove.getId())
+                )
                 .contentType("application/json")
                 .header("Authorization", "Bearer " + generateRbkAdminJwt())
                 .header("X-Request-ID", "testRequestId"))

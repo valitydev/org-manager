@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
-
 import java.util.Objects;
 
 @Slf4j
@@ -147,11 +146,11 @@ public class OrgsController implements OrgsApi {
     public ResponseEntity<Role> getOrgRole(
             String requestId,
             String orgId,
-            RoleId roleId) {
+            String roleId) {
         log.info("Get organization id: requestId={}, orgId={}, roleId={}", requestId, orgId, roleId);
         ResourceDto resource = ResourceDto.builder()
                 .orgId(orgId)
-                .roleId(roleId.getValue())
+                .roleId(roleId)
                 .build();
         resourceAccessService.checkRights(resource);
         return ResponseEntity.ok(organizationRoleService.get(orgId, roleId));
@@ -187,7 +186,7 @@ public class OrgsController implements OrgsApi {
         ResourceDto resource = ResourceDto.builder()
                 .orgId(orgId)
                 .memberId(userId)
-                .roleId(body.getRoleId().getValue())
+                .roleId(body.getRoleId())
                 .scopeResourceId(Objects.nonNull(body.getScope()) ? body.getScope().getResourceId() : null)
                 .build();
         resourceAccessService.checkRights(resource);

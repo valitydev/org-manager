@@ -26,9 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
 
 @Slf4j
 @Service
@@ -85,7 +82,7 @@ public class OrganizationService {
     private List<MemberRoleEntity> getMemberRolesInOrg(String orgId, MemberEntity memberEntity) {
         return memberEntity.getRoles().stream()
                 .filter(memberRole -> isActiveOrgMemberRole(orgId, memberRole))
-                .collect(toList());
+                .toList();
     }
 
     private boolean isActiveOrgMemberRole(String orgId, MemberRoleEntity memberRole) {
@@ -159,7 +156,7 @@ public class OrganizationService {
         String continuationToken = getContinuationId(entities, limitEntities);
         List<Organization> organizations = limitEntities
                 .stream().map(organizationConverter::toDomain)
-                .collect(toList());
+                .toList();
 
         return new OrganizationSearchResult()
                 .continuationToken(continuationToken)
@@ -180,7 +177,7 @@ public class OrganizationService {
         }
         return entities.stream()
                 .limit(limit)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private String getContinuationId(List<OrganizationEntity> entities, List<OrganizationEntity> limitEntities) {

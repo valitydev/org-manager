@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>org-manager</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <packaging>jar</packaging>
 
     <name>org-manager</name>
@@ -24,10 +24,7 @@
         <server.rest.port>8080</server.rest.port>
         <management.port>8023</management.port>
         <exposed.ports>${server.port} ${server.rest.port} ${management.port}</exposed.ports>
-        <spring-security.version>5.6.12</spring-security.version>
-        <keycloak.version>17.0.0</keycloak.version>
-        <schedlock.version>4.34.0</schedlock.version>
-        <swag.organizations.version>1.19-8707f87-server</swag.organizations.version>
+        <spring-security.version>5.6.12</s5.8.11</k17.0.1</s4.47.0</swag.organizations.version>
         <wiremock-jre8-standalone.version>2.32.0</wiremock-jre8-standalone.version>
     </properties>
 
@@ -202,17 +199,17 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>32.0.0-jre</version>
+            <version>32.0.0-jr32.1.3-jre</version>
         </dependency>
         <dependency>
             <groupId>org.openapitools</groupId>
             <artifactId>jackson-databind-nullable</artifactId>
-            <version>0.2.2</version>
+            <version>0.2.2</ve0.2.6
         </dependency>
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>2.0</version>
+            <version>2.0</vers2.2
         </dependency>
 
 
@@ -301,7 +298,7 @@
                     <dependency>
                         <groupId>org.apache.maven.shared</groupId>
                         <artifactId>maven-filtering</artifactId>
-                        <version>3.2.0</version>
+                        <version>3.3.2</version>
                     </dependency>
                 </dependencies>
                 <configuration>

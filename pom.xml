@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>org-manager</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>org-manager</name>
@@ -193,7 +193,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.4.3</version>
+            <version>42.4.4</version>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>

@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>org-manager</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>org-manager</name>
@@ -28,7 +28,7 @@
         <keycloak.version>17.0.0</keycloak.version>
         <schedlock.version>4.34.0</schedlock.version>
         <swag.organizations.version>1.19-8707f87-server</swag.organizations.version>
-        <wiremock-jre8-standalone.version>2.32.0</wiremock-jre8-standalone.version>
+        <wiremock-jre8-standalone.version>2.35.1</wiremock-jre8-standalone.version>
     </properties>
 
     <dependencies>
@@ -231,7 +231,7 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-contract-wiremock</artifactId>
-            <version>3.1.1</version>
+            <version>3.1.10</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -243,13 +243,13 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt</artifactId>
-            <version>0.9.1</version>
+            <version>0.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
-            <version>1.19.1</version>
+            <version>1.21.4</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -261,7 +261,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.19.1</version>
+            <version>1.21.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

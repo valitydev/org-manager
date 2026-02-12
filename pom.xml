@@ -28,7 +28,7 @@
         <keycloak.version>17.0.0</keycloak.version>
         <schedlock.version>4.34.0</schedlock.version>
         <swag.organizations.version>1.19-8707f87-server</swag.organizations.version>
-        <wiremock-jre8-standalone.version>2.32.0</wiremock-jre8-standalone.version>
+        <wiremock-jre8-standalone.version>3.0.1</wiremock-jre8-standalone.version>
     </properties>
 
     <dependencies>

@@ -11,8 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Size;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import java.util.Objects;
 
 @Slf4j
@@ -128,15 +128,15 @@ public class OrgsController implements OrgsApi {
     public ResponseEntity<Void> revokeInvitation(String requestId,
                                                  String orgId,
                                                  String invitationId,
-                                                 InlineObject1 inlineObject1) {
+                                                 RevokeInvitationRequest request) {
         log.info("Revoke invitation: requestId={}, orgId={}, invitationId={}, payload={}",
-                requestId, orgId, invitationId, inlineObject1);
+                requestId, orgId, invitationId, request);
         ResourceDto resource = ResourceDto.builder()
                 .orgId(orgId)
                 .invitationId(invitationId)
                 .build();
         resourceAccessService.checkRights(resource);
-        invitationService.revoke(orgId, invitationId, inlineObject1);
+        invitationService.revoke(orgId, invitationId, request);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
@@ -167,12 +167,12 @@ public class OrgsController implements OrgsApi {
     }
 
     @Override
-    public ResponseEntity<Organization> patchOrg(String requestId, String orgId, InlineObject inlineObject) {
+    public ResponseEntity<Organization> patchOrg(String requestId, String orgId, PatchOrgRequest request) {
         ResourceDto resource = ResourceDto.builder()
                 .orgId(orgId)
                 .build();
         resourceAccessService.checkRights(resource);
-        Organization modifiedOrganization = organizationService.modify(orgId, inlineObject.getName());
+        Organization modifiedOrganization = organizationService.modify(orgId, request.getName());
         return ResponseEntity.ok(modifiedOrganization);
     }
 

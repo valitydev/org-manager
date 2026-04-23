@@ -5,7 +5,7 @@ import dev.vality.orgmanager.entity.OrganizationEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import java.util.Set;
 

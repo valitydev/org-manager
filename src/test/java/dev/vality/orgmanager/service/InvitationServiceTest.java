@@ -189,9 +189,9 @@ public class InvitationServiceTest {
                 .thenReturn(Optional.of(entity));
 
         // When
-        service.revoke(orgId, invitationId, new InlineObject1()
+        service.revoke(orgId, invitationId, new RevokeInvitationRequest()
                 .reason("reason")
-                .status(InlineObject1.StatusEnum.REVOKED));
+                .status(RevokeInvitationRequest.StatusEnum.REVOKED));
 
         // Then
         assertThat(entity.getStatus())
@@ -210,7 +210,8 @@ public class InvitationServiceTest {
         when(invitationRepository.findByIdAndOrganizationId(invitationId, orgId))
                 .thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> service.revoke(orgId, invitationId, new InlineObject1()));
+        assertThrows(ResourceNotFoundException.class,
+                () -> service.revoke(orgId, invitationId, new RevokeInvitationRequest()));
     }
 
     @Test

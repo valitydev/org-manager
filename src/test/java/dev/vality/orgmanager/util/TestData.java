@@ -61,7 +61,7 @@ public class TestData {
                 .createdAt(LocalDateTime.now())
                 .expiresAt(expiresAt)
                 .inviteeContactEmail("contactEmail")
-                .inviteeContactType(InviteeContact.TypeEnum.EMAIL.getValue())
+                .inviteeContactType(InviteeContact.TypeEnum.E_MAIL.getValue())
                 .organizationId(organizationId)
                 .status(statusName.getValue())
                 .inviteeRoles(Set.of(
@@ -85,7 +85,7 @@ public class TestData {
     public static InvitationRequest buildInvitationRequest() {
         InviteeContact inviteeContact = new InviteeContact();
         inviteeContact.setEmail("testEmail@mail.ru");
-        inviteeContact.setType(InviteeContact.TypeEnum.EMAIL);
+        inviteeContact.setType(InviteeContact.TypeEnum.E_MAIL);
         Invitee invitee = new Invitee();
         invitee.setContact(inviteeContact);
         invitee.setRoles(List.of(buildMemberRole()));

@@ -4,25 +4,23 @@ server:
     port: '@server.rest.port@'
 
 management:
-  security:
-    flag: false
   server:
     port: ${management.port}
-  metrics:
-    export:
-      prometheus:
-        enabled: false
   endpoint:
     health:
       show-details: always
     metrics:
-      enabled: true
+      access: unrestricted
     prometheus:
-      enabled: true
+      access: unrestricted
   endpoints:
     web:
       exposure:
         include: health,info,prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: false
 
 spring:
   application:
@@ -80,12 +78,8 @@ dudoser:
   networkTimeout: 10000
   mail-from: no-reply@vality.dev
 
-party-management:
-  url: http://party-management:8022/processing/partymgmt
-  networkTimeout: 10000
-
 dashboard:
-  url: https://dashboard.rbk.money/organization-section/accept-invitation/
+  url: https://dashboard:8080
 
 bouncer:
   url: http://localhost:8022/change_it

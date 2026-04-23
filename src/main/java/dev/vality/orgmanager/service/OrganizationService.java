@@ -42,7 +42,6 @@ public class OrganizationService {
     private final MemberContextRepository memberContextRepository;
     private final InvitationService invitationService;
     private final MemberRoleService memberRoleService;
-    private final PartyManagementService partyManagementService;
 
     // TODO [a.romanov]: idempotency
     @Transactional
@@ -53,7 +52,6 @@ public class OrganizationService {
         String keycloakUserId = token.getSubject();
         OrganizationEntity entity = organizationConverter.toEntity(organization, keycloakUserId);
         OrganizationEntity savedEntity = organizationRepository.save(entity);
-        partyManagementService.createParty(savedEntity.getParty(), keycloakUserId, token.getEmail());
         return organizationConverter.toDomain(savedEntity);
     }
 

@@ -40,40 +40,11 @@ class OrganizationServiceTest {
     private MemberConverter memberConverter;
     @Mock
     private MemberRepository memberRepository;
-    @Mock
-    private PartyManagementService partyManagementService;
-
     @InjectMocks
     private OrganizationService service;
 
     private static final String OWNER_ID = "testOwnerId";
     private static final String EMAIL = "email@email.org";
-
-    @Test
-    void shouldThrowPartyManagementExceptionOnCreate() {
-        Organization organization = new Organization();
-        OrganizationEntity entity = new OrganizationEntity();
-        OrganizationEntity savedEntity = TestObjectFactory.buildOrganization();
-
-        when(organizationConverter.toEntity(organization, OWNER_ID))
-                .thenReturn(entity);
-        when(organizationRepository.save(entity))
-                .thenReturn(savedEntity);
-        doThrow(new PartyManagementException())
-                .when(partyManagementService).createParty(anyString(), anyString(), anyString());
-
-        assertThrows(PartyManagementException.class,
-                () -> service.create(testToken(OWNER_ID, EMAIL), organization, ""));
-
-        verify(organizationConverter, times(1))
-                .toEntity(organization, OWNER_ID);
-        verify(organizationRepository, times(1))
-                .save(entity);
-        verify(partyManagementService, times(1))
-                .createParty(savedEntity.getParty(), OWNER_ID, EMAIL);
-        verify(organizationConverter, times(0))
-                .toDomain(any(OrganizationEntity.class));
-    }
 
     @Test
     void shouldCreate() {
@@ -96,8 +67,6 @@ class OrganizationServiceTest {
                 .toEntity(organization, OWNER_ID);
         verify(organizationRepository, times(1))
                 .save(entity);
-        verify(partyManagementService, times(1))
-                .createParty(savedEntity.getParty(), OWNER_ID, EMAIL);
         verify(organizationConverter, times(1))
                 .toDomain(savedEntity);
         assertThat(response)

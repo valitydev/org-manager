@@ -38,7 +38,7 @@ public class UserControllerTest extends AbstractControllerTest {
         mockMvc.perform(post("/user/membership")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(organizationJoinRequest))
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isNotFound());
     }
@@ -53,14 +53,14 @@ public class UserControllerTest extends AbstractControllerTest {
         mockMvc.perform(post("/user/membership")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(organizationJoinRequest))
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void joinOrgTestWrongUserEmail() throws Exception {
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
         OrganizationEntity savedOrg = organizationRepository.save(buildOrganization());
         InvitationEntity savedInvitation = invitationRepository.save(buildInvitation(savedOrg.getId()));
         OrganizationJoinRequest organizationJoinRequest = new OrganizationJoinRequest();
@@ -88,14 +88,14 @@ public class UserControllerTest extends AbstractControllerTest {
         mockMvc.perform(post("/user/membership")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(organizationJoinRequest))
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().is(422));
     }
 
     @Test
     void joinOrgNewMemberTest() throws Exception {
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
         String userId = getUserFromToken();
         OrganizationEntity savedOrg = organizationRepository.save(buildOrganization());
         InvitationEntity savedInvitation = invitationRepository.save(buildInvitation(savedOrg.getId(), DEFAULT_EMAIL));
@@ -126,7 +126,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     void joinOrgExistMemberTest() throws Exception {
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
         String userId = getUserFromToken();
         memberRepository.save(testMemberEntity(userId));
         OrganizationEntity savedOrg = organizationRepository.save(buildOrganization());
@@ -160,7 +160,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     @Transactional
     void cancelOrgMembershipTest() throws Exception {
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
         String userId = getUserFromToken();
         MemberEntity member = memberRepository.save(testMemberEntity(userId));
         OrganizationEntity orgWithMember = organizationRepository.save(buildOrganization(member));
@@ -177,7 +177,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     void inquireOrgMembershipTest() throws Exception {
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
         String userId = getUserFromToken();
         MemberEntity member = memberRepository.save(testMemberEntity(userId));
         OrganizationEntity orgWithMember = organizationRepository.save(buildOrganization(member));
@@ -200,7 +200,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     @Transactional
     void listOrgMembershipAfterCancel() throws Exception {
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
         String userId = getUserFromToken();
         MemberEntity member = memberRepository.save(testMemberEntity(userId));
         OrganizationEntity orgWithMember = organizationRepository.save(buildOrganization(member));
@@ -238,7 +238,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     void listOrgMembershipWithoutLimitTest() throws Exception {
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
         String userId = getUserFromToken();
         MemberEntity targetMember = memberRepository.save(testMemberEntity(userId));
         Set<OrganizationEntity> targetEntities = buildOrganization(targetMember, 7);
@@ -267,7 +267,7 @@ public class UserControllerTest extends AbstractControllerTest {
         targetEntities.addAll(List.of(anotherOrganization, organizationWithOwner));
         organizationRepository.saveAll(targetEntities);
         String limit = "4";
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
 
         MvcResult mvcResultFirst = mockMvc.perform(get("/user/membership")
                 .queryParam("limit", limit)
@@ -315,7 +315,7 @@ public class UserControllerTest extends AbstractControllerTest {
         OrganizationEntity organizationEntity = organizationRepository.save(buildOrganization());
         OrganizationSwitchRequest organizationSwitchRequest = new OrganizationSwitchRequest();
         organizationSwitchRequest.setOrganizationId(organizationEntity.getId());
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
 
         mockMvc.perform(put("/user/context")
                 .accept(MediaType.APPLICATION_JSON)
@@ -332,7 +332,7 @@ public class UserControllerTest extends AbstractControllerTest {
         String userId = getUserFromToken();
         MemberEntity memberEntity = memberRepository.save(testMemberEntity(userId));
         OrganizationEntity organizationEntity = organizationRepository.save(buildOrganization());
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
         OrganizationSwitchRequest organizationSwitchRequest = new OrganizationSwitchRequest();
         organizationSwitchRequest.setOrganizationId(organizationEntity.getId());
 
@@ -358,7 +358,7 @@ public class UserControllerTest extends AbstractControllerTest {
         OrganizationEntity organization = buildOrganization();
         organization.setOwner(userId);
         OrganizationEntity organizationEntity = organizationRepository.save(organization);
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
         OrganizationSwitchRequest organizationSwitchRequest = new OrganizationSwitchRequest();
         organizationSwitchRequest.setOrganizationId(organizationEntity.getId());
 
@@ -382,7 +382,7 @@ public class UserControllerTest extends AbstractControllerTest {
     void switchOrganizationOnUnknown() throws Exception {
         String userId = getUserFromToken();
         MemberEntity memberEntity = memberRepository.save(testMemberEntity(userId));
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
         OrganizationSwitchRequest organizationSwitchRequest = new OrganizationSwitchRequest();
         organizationSwitchRequest.setOrganizationId("testOrgId");
 
@@ -408,7 +408,7 @@ public class UserControllerTest extends AbstractControllerTest {
                         .build()
         );
         OrganizationEntity newOrganizationEntity = organizationRepository.save(buildOrganization());
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
         OrganizationSwitchRequest organizationSwitchRequest = new OrganizationSwitchRequest();
         organizationSwitchRequest.setOrganizationId(newOrganizationEntity.getId());
 
@@ -438,7 +438,7 @@ public class UserControllerTest extends AbstractControllerTest {
                         .organizationEntity(organizationEntity)
                         .build()
         );
-        String jwtToken = generateRbkAdminJwt();
+        String jwtToken = generateAdminJwt();
 
         mockMvc.perform(get("/user/context")
                 .accept(MediaType.APPLICATION_JSON)

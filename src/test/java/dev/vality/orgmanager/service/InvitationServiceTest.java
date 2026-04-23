@@ -210,7 +210,8 @@ public class InvitationServiceTest {
         when(invitationRepository.findByIdAndOrganizationId(invitationId, orgId))
                 .thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> service.revoke(orgId, invitationId, new RevokeInvitationRequest()));
+        assertThrows(ResourceNotFoundException.class,
+                () -> service.revoke(orgId, invitationId, new RevokeInvitationRequest()));
     }
 
     @Test

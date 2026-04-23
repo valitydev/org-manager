@@ -74,12 +74,12 @@ public class JwtTokenBuilder {
                     .claim("email", email)
                     .build();
 
-            SignedJWT signedJWT = new SignedJWT(
+            SignedJWT signedJwt = new SignedJWT(
                     new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).build(),
                     claimsSet
             );
-            signedJWT.sign(new RSASSASigner(privateKey));
-            return signedJWT.serialize();
+            signedJwt.sign(new RSASSASigner(privateKey));
+            return signedJwt.serialize();
         } catch (JOSEException e) {
             throw new RuntimeException("Unable to generate JWT for test", e);
         }

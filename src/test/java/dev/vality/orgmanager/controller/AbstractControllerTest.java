@@ -6,19 +6,22 @@ import dev.vality.orgmanager.service.ResourceAccessService;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @Import(KeycloakTestConfig.class)
 @AutoConfigureMockMvc
 @AutoConfigureWireMock(port = 0)
-@TestPropertySource(locations = "classpath:wiremock.properties")
+@TestPropertySource(
+        locations = "classpath:wiremock.properties",
+        properties = "auth.enabled=true"
+)
 public abstract class AbstractControllerTest extends AbstractRepositoryTest {
 
-    @SpyBean
+    @MockitoSpyBean
     protected ResourceAccessService resourceAccessService;
 
     @BeforeEach
@@ -40,8 +43,8 @@ public abstract class AbstractControllerTest extends AbstractRepositoryTest {
         return keycloakOpenIdStub.generateJwt(iat, exp, roles);
     }
 
-    protected String generateRbkAdminJwt() {
-        return keycloakOpenIdStub.generateJwt("RBKadmin");
+    protected String generateAdminJwt() {
+        return keycloakOpenIdStub.generateJwt("admin");
     }
 
     protected String getUserFromToken() {

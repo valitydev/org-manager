@@ -42,7 +42,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
 
         mockMvc.perform(delete(String.format("/orgs/%s/members/%s", ORGANIZATION_ID, MEMBER_ID))
                 .contentType("application/json")
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isFailedDependency());
     }
@@ -54,7 +54,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
 
         mockMvc.perform(delete(String.format("/orgs/%s/members/%s", ORGANIZATION_ID, MEMBER_ID))
                 .contentType("application/json")
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isForbidden());
     }
@@ -68,7 +68,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
         mockMvc.perform(post(String.format("/orgs/%s/members/%s/roles", ORGANIZATION_ID, MEMBER_ID))
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(memberRole))
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isForbidden());
     }
@@ -92,7 +92,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
         mockMvc.perform(post(String.format("/orgs/%s/members/%s/roles", savedOrganization.getId(), savedMember.getId()))
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(memberRole))
-                        .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                        .header("Authorization", "Bearer " + generateAdminJwt())
                         .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -117,7 +117,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
 
         mockMvc.perform(delete(String.format("/orgs/%s/members/%s", savedOrganization.getId(), savedMember.getId()))
                 .contentType("application/json")
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isNoContent());
 
@@ -144,7 +144,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
                         savedMemberRole.getId())
         )
                 .contentType("application/json")
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isUnprocessableEntity());
     }
@@ -167,7 +167,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
                                 roleToRemove.getId())
                 )
                 .contentType("application/json")
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isNoContent());
 
@@ -188,7 +188,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
         mockMvc.perform(post(String.format("/orgs/%s/invitations", ORGANIZATION_ID))
                 .contentType("application/json")
                 .content(body)
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isForbidden());
     }
@@ -203,7 +203,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
         mockMvc.perform(post(String.format("/orgs/%s/invitations", ORGANIZATION_ID))
                 .contentType("application/json")
                 .content(body)
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(jsonPath("$.status", is("Pending")))
                 .andExpect(jsonPath("$.acceptToken").doesNotExist());
@@ -220,7 +220,7 @@ public class OrgsControllerTest extends AbstractControllerTest {
 
         mockMvc.perform(get(String.format("/orgs/%s/members", savedOrganization.getId()))
                 .contentType("application/json")
-                .header("Authorization", "Bearer " + generateRbkAdminJwt())
+                .header("Authorization", "Bearer " + generateAdminJwt())
                 .header("X-Request-ID", "testRequestId"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result", anything()));

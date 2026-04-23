@@ -1,13 +1,17 @@
 package dev.vality.orgmanager.controller;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 
 import java.security.PrivateKey;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class JwtTokenBuilder {
@@ -54,32 +58,31 @@ public class JwtTokenBuilder {
     }
 
     public String generateJwtWithRoles(long iat, long exp, String issuer, String... roles) {
-        String payload;
         try {
-            payload = new JSONObject()
-                    .put("jti", UUID.randomUUID().toString())
-                    .put("exp", exp)
-                    .put("nbf", "0")
-                    .put("iat", iat)
-                    .put("iss", issuer)
-                    .put("aud", "private-api")
-                    .put("sub", userId)
-                    .put("typ", "Bearer")
-                    .put("azp", "private-api")
-                    .put("resource_access", new JSONObject()
-                            .put("common-api", new JSONObject()
-                                    .put("roles", new JSONArray(roles))))
-                    .put("preferred_username", username)
-                    .put("email", email).toString();
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
+            JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                    .jwtID(UUID.randomUUID().toString())
+                    .expirationTime(java.util.Date.from(Instant.ofEpochSecond(exp)))
+                    .notBeforeTime(java.util.Date.from(Instant.EPOCH))
+                    .issueTime(java.util.Date.from(Instant.ofEpochSecond(iat)))
+                    .issuer(issuer)
+                    .audience("private-api")
+                    .subject(userId)
+                    .claim("typ", "Bearer")
+                    .claim("azp", "private-api")
+                    .claim("resource_access", Map.of("common-api", Map.of("roles", List.of(roles))))
+                    .claim("preferred_username", username)
+                    .claim("email", email)
+                    .build();
 
-        String jwt = Jwts.builder()
-                .setPayload(payload)
-                .signWith(SignatureAlgorithm.RS256, privateKey)
-                .compact();
-        return jwt;
+            SignedJWT signedJWT = new SignedJWT(
+                    new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).build(),
+                    claimsSet
+            );
+            signedJWT.sign(new RSASSASigner(privateKey));
+            return signedJWT.serialize();
+        } catch (JOSEException e) {
+            throw new RuntimeException("Unable to generate JWT for test", e);
+        }
     }
 
 }

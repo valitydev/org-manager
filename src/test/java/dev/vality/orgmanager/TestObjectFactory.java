@@ -103,7 +103,7 @@ public abstract class TestObjectFactory {
         Invitee invitee = new Invitee();
         InviteeContact inviteeContact = new InviteeContact();
         inviteeContact.setEmail(randomString());
-        inviteeContact.setType(InviteeContact.TypeEnum.EMAIL);
+        inviteeContact.setType(InviteeContact.TypeEnum.E_MAIL);
         invitee.setContact(inviteeContact);
         InvitationRequest invitationRequest = new InvitationRequest();
         invitationRequest.setInvitee(invitee);

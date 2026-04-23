@@ -87,11 +87,11 @@ public class InvitationService {
     }
 
     @Transactional
-    public void revoke(String orgId, String invitationId, InlineObject1 inlineObject) {
+    public void revoke(String orgId, String invitationId, RevokeInvitationRequest request) {
         InvitationEntity invitation = invitationRepository.findByIdAndOrganizationId(invitationId, orgId)
                 .orElseThrow(ResourceNotFoundException::new);
-        invitation.setStatus(inlineObject.getStatus().getValue());
-        invitation.setRevocationReason(inlineObject.getReason());
+        invitation.setStatus(request.getStatus().getValue());
+        invitation.setRevocationReason(request.getReason());
         invitation.setRevokedAt(LocalDateTime.now());
         invitationRepository.save(invitation);
 

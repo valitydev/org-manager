@@ -47,7 +47,7 @@ public class InvitationConverterTest {
         InvitationRequest invitation = new InvitationRequest()
                 .invitee(new Invitee()
                         .contact(new InviteeContact()
-                                .type(InviteeContact.TypeEnum.EMAIL)
+                                .type(InviteeContact.TypeEnum.E_MAIL)
                                 .email("email"))
                         .roles(List.of(new MemberRole())))
                 .metadata(Map.of("a", "b"));
@@ -89,7 +89,7 @@ public class InvitationConverterTest {
                 .createdAt(OffsetDateTime.parse("2019-08-24T14:15:22Z"))
                 .invitee(new Invitee()
                         .contact(new InviteeContact()
-                                .type(InviteeContact.TypeEnum.EMAIL)
+                                .type(InviteeContact.TypeEnum.E_MAIL)
                                 .email("email"))
                         .roles(List.of(new MemberRole())))
                 .metadata(Map.of("a", "b"));

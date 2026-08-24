@@ -13,13 +13,13 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,7 +65,7 @@ public class ConfigResolverConfig {
 
     private String readKeyFromFile(String filePath) {
         try {
-            List<String> strings = Files.readAllLines(Paths.get(filePath));
+            List<String> strings = Files.readAllLines(Path.of(filePath));
             strings.remove(strings.size() - 1);
             strings.remove(0);
 

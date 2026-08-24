@@ -1,20 +1,21 @@
 package dev.vality.orgmanager.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.vality.orgmanager.repository.AbstractRepositoryTest;
 import dev.vality.orgmanager.service.ResourceAccessService;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.wiremock.spring.ConfigureWireMock;
+import org.wiremock.spring.EnableWireMock;
+import tools.jackson.databind.json.JsonMapper;
 
 @Import(KeycloakTestConfig.class)
 @AutoConfigureMockMvc
-@AutoConfigureWireMock(port = 0)
+@EnableWireMock(@ConfigureWireMock(port = 0, baseUrlProperties = "wiremock.server.baseUrl"))
 @TestPropertySource(
         locations = "classpath:wiremock.properties",
         properties = "auth.enabled=true"
@@ -37,7 +38,7 @@ public abstract class AbstractControllerTest extends AbstractRepositoryTest {
     protected MockMvc mockMvc;
 
     @Autowired
-    protected ObjectMapper objectMapper;
+    protected JsonMapper objectMapper;
 
     protected String generateJwt(long iat, long exp, String... roles) {
         return keycloakOpenIdStub.generateJwt(iat, exp, roles);

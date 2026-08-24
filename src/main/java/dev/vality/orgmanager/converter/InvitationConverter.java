@@ -2,7 +2,7 @@ package dev.vality.orgmanager.converter;
 
 import dev.vality.orgmanager.config.properties.InviteTokenProperties;
 import dev.vality.orgmanager.entity.InvitationEntity;
-import dev.vality.orgmanager.util.JsonMapper;
+import dev.vality.orgmanager.util.JsonCodec;
 import dev.vality.swag.organizations.model.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,7 @@ import static java.util.stream.Collectors.toSet;
 @RequiredArgsConstructor
 public class InvitationConverter {
 
-    private final JsonMapper jsonMapper;
+    private final JsonCodec jsonCodec;
     private final MemberRoleConverter memberRoleConverter;
     private final InviteTokenProperties inviteTokenProperties;
 
@@ -48,7 +48,7 @@ public class InvitationConverter {
                         .stream()
                         .map(role -> memberRoleConverter.toEntity(role, orgId))
                         .collect(toSet()))
-                .metadata(jsonMapper.toJson(invitation.getMetadata()))
+                .metadata(jsonCodec.toJson(invitation.getMetadata()))
                 .status(InvitationStatusName.PENDING.getValue())
                 .acceptToken(UUID.randomUUID().toString()) // TODO [a.romanov]: token
                 .build();
@@ -81,7 +81,7 @@ public class InvitationConverter {
         invitation.id(entity.getId())
                 .createdAt(OffsetDateTime.of(entity.getCreatedAt(), ZoneOffset.UTC))
                 .expiresAt(OffsetDateTime.of(entity.getExpiresAt(), ZoneOffset.UTC))
-                .metadata(entity.getMetadata() != null ? jsonMapper.toMap(entity.getMetadata()) : null)
+                .metadata(entity.getMetadata() != null ? jsonCodec.toMap(entity.getMetadata()) : null)
                 .invitee(new Invitee()
                         .contact(new InviteeContact()
                                 .type(InviteeContact.TypeEnum.fromValue(entity.getInviteeContactType()))

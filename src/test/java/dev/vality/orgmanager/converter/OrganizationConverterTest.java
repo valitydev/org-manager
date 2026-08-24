@@ -1,12 +1,12 @@
 package dev.vality.orgmanager.converter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.vality.orgmanager.TestObjectFactory;
 import dev.vality.orgmanager.entity.OrganizationEntity;
-import dev.vality.orgmanager.util.JsonMapper;
+import dev.vality.orgmanager.util.JsonCodec;
 import dev.vality.swag.organizations.model.Organization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Map;
 
@@ -20,8 +20,7 @@ class OrganizationConverterTest {
     @BeforeEach
     public void setUp() {
         converter = new OrganizationConverter(
-                new JsonMapper(
-                        new ObjectMapper()));
+                new JsonCodec(new JsonMapper()));
     }
 
     @Test

@@ -2,7 +2,7 @@ package dev.vality.orgmanager.config;
 
 import org.apache.catalina.connector.Connector;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -19,6 +19,6 @@ public class TomcatWebServerCustomizer implements WebServerFactoryCustomizer<Tom
         Connector connector = new Connector();
         connector.setPort(restPort);
 
-        factory.addAdditionalTomcatConnectors(connector);
+        factory.addAdditionalConnectors(connector);
     }
 }

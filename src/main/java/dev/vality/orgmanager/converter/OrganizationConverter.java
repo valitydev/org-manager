@@ -1,7 +1,7 @@
 package dev.vality.orgmanager.converter;
 
 import dev.vality.orgmanager.entity.OrganizationEntity;
-import dev.vality.orgmanager.util.JsonMapper;
+import dev.vality.orgmanager.util.JsonCodec;
 import dev.vality.swag.organizations.model.Organization;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrganizationConverter {
 
-    private final JsonMapper jsonMapper;
+    private final JsonCodec jsonCodec;
 
     public OrganizationEntity toEntity(Organization organization, String ownerId) {
         String orgId = UUID.randomUUID().toString();
@@ -26,7 +26,7 @@ public class OrganizationConverter {
                 .name(organization.getName())
                 .owner(ownerId)
                 .party(partyId)
-                .metadata(jsonMapper.toJson(organization.getMetadata()))
+                .metadata(jsonCodec.toJson(organization.getMetadata()))
                 .build();
     }
 
@@ -37,7 +37,7 @@ public class OrganizationConverter {
                 .name(entity.getName())
                 .owner(entity.getOwner())
                 .party(entity.getParty())
-                .metadata(entity.getMetadata() != null ? jsonMapper.toMap(entity.getMetadata()) : null);
+                .metadata(entity.getMetadata() != null ? jsonCodec.toMap(entity.getMetadata()) : null);
     }
 
 }

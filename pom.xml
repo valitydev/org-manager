@@ -23,8 +23,8 @@
         <server.rest.port>8080</server.rest.port>
         <management.port>8023</management.port>
         <exposed.ports>${server.port} ${server.rest.port} ${management.port}</exposed.ports>
-        <keycloak.version>17.0.0</keycloak.version>
-        <schedlock.version>4.34.0</schedlock.version>
+        <keycloak.version>26.7.2</keycloak.version>
+        <schedlock.version>7.7.0</schedlock.version>
         <swag.organizations.version>1.38-8c9b968</swag.organizations.version>
         <damsel.version>1.685-5c25c2e</damsel.version>
         <shared-resources.version>5.0.0</shared-resources.version>
@@ -191,12 +191,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt</artifactId>
-            <version>0.9.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
@@ -245,14 +239,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-remote-resources-plugin</artifactId>
-                <version>1.7.0</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.shared</groupId>
-                        <artifactId>maven-filtering</artifactId>
-                        <version>3.2.0</version>
-                    </dependency>
-                </dependencies>
+                <version>3.3.0</version>
                 <configuration>
                     <resourceBundles>
                         <resourceBundle>dev.vality:shared-resources:${shared-resources.version}</resourceBundle>

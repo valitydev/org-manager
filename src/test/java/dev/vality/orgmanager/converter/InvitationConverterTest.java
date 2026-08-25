@@ -1,13 +1,19 @@
 package dev.vality.orgmanager.converter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.vality.orgmanager.config.properties.InviteTokenProperties;
 import dev.vality.orgmanager.entity.InvitationEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
-import dev.vality.orgmanager.util.JsonMapper;
-import dev.vality.swag.organizations.model.*;
+import dev.vality.orgmanager.util.JsonCodec;
+import dev.vality.swag.organizations.model.Invitation;
+import dev.vality.swag.organizations.model.InvitationPending;
+import dev.vality.swag.organizations.model.InvitationRequest;
+import dev.vality.swag.organizations.model.InvitationStatusName;
+import dev.vality.swag.organizations.model.Invitee;
+import dev.vality.swag.organizations.model.InviteeContact;
+import dev.vality.swag.organizations.model.MemberRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -36,7 +42,7 @@ public class InvitationConverterTest {
         when(inviteTokenProperties.getLifeTimeInDays()).thenReturn(30L);
 
         converter = new InvitationConverter(
-                new JsonMapper(new ObjectMapper()),
+                new JsonCodec(new JsonMapper()),
                 memberRoleConverter,
                 inviteTokenProperties
         );
@@ -63,7 +69,9 @@ public class InvitationConverterTest {
         assertThat(entity.getInviteeContactType()).isEqualTo(invitation.getInvitee().getContact().getType().getValue());
         assertThat(entity.getOrganizationId()).isEqualTo(orgId);
         assertThat(entity.getStatus()).isEqualTo(InvitationStatusName.PENDING.getValue());
-        assertThat(entity.getMetadata()).isEqualTo(new ObjectMapper().writeValueAsString(invitation.getMetadata()));
+        String expectedMetadata = new JsonMapper()
+                .writeValueAsString(invitation.getMetadata());
+        assertThat(entity.getMetadata()).isEqualTo(expectedMetadata);
     }
 
     @Test

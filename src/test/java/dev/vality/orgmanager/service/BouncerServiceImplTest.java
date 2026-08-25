@@ -1,6 +1,12 @@
 package dev.vality.orgmanager.service;
 
-import dev.vality.bouncer.decisions.*;
+import dev.vality.bouncer.decisions.ArbiterSrv;
+import dev.vality.bouncer.decisions.Context;
+import dev.vality.bouncer.decisions.Judgement;
+import dev.vality.bouncer.decisions.Resolution;
+import dev.vality.bouncer.decisions.ResolutionAllowed;
+import dev.vality.bouncer.decisions.ResolutionRestricted;
+import dev.vality.bouncer.decisions.RulesetNotFound;
 import dev.vality.orgmanagement.UserNotFound;
 import dev.vality.orgmanager.TestObjectFactory;
 import dev.vality.orgmanager.config.properties.BouncerProperties;
@@ -11,16 +17,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
 class BouncerServiceImplTest {
 
     @Mock

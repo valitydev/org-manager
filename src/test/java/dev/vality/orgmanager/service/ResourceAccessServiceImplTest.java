@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
 class ResourceAccessServiceImplTest {
 
     private AccessProperties accessProperties;
@@ -75,7 +75,6 @@ class ResourceAccessServiceImplTest {
         ResourceDto resource = ResourceDto.builder()
                 .invitationToken(TestObjectFactory.randomString())
                 .build();
-        when(bouncerService.havePrivileges(any(BouncerContextDto.class))).thenReturn(true);
         when(organizationService.getOrgIdByInvitationToken(resource.getInvitationToken()))
                 .thenThrow(new ResourceNotFoundException());
 
@@ -120,7 +119,6 @@ class ResourceAccessServiceImplTest {
         ResourceDto resource = ResourceDto.builder()
                 .memberRoleId(TestObjectFactory.randomString())
                 .build();
-        when(bouncerService.havePrivileges(any(BouncerContextDto.class))).thenReturn(true);
         when(memberRoleService.findById(resource.getMemberRoleId()))
                 .thenThrow(new ResourceNotFoundException());
 

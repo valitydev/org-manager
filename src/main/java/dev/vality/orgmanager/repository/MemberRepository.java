@@ -3,7 +3,7 @@ package dev.vality.orgmanager.repository;
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.List;
 public interface MemberRepository extends JpaRepository<MemberEntity, String> {
 
 
-    @Query(value = "SELECT m.id, " +
+    @NativeQuery("SELECT m.id, " +
             "              m.email,  " +
             "              mr.id as memberRoleId, " +
             "              mr.organization_id as organizationId, " +
@@ -29,7 +29,7 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String> {
             "     AND mr.active = 'true' " +
             "     AND mr.id = mtmr.member_role_id " +
             "     AND mr.organization_id = mto.organization_id " +
-            "     AND m.id = mtmr.member_id ", nativeQuery = true)
+            "     AND m.id = mtmr.member_id ")
     List<MemberWithRoleDto> getOrgMemberList(String orgId);
 
     boolean existsById(String id);

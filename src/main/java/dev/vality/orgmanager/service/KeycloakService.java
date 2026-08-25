@@ -1,12 +1,12 @@
 package dev.vality.orgmanager.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.representations.AccessToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -16,14 +16,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class KeycloakService {
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     public AccessToken getAccessToken() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
             throw new IllegalStateException("Jwt principal is required");
         }
-        return objectMapper.convertValue(normalizedClaims(jwt.getClaims()), AccessToken.class);
+        return jsonMapper.convertValue(normalizedClaims(jwt.getClaims()), AccessToken.class);
     }
 
     private Map<String, Object> normalizedClaims(Map<String, Object> claims) {

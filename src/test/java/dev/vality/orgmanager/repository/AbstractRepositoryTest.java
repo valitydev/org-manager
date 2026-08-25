@@ -11,7 +11,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @ActiveProfiles("test")
@@ -69,7 +69,7 @@ public abstract class AbstractRepositoryTest {
     }
 
     @SuppressWarnings("rawtypes")
-    static PostgreSQLContainer postgres = new PostgreSQLContainer<>(DockerImageName
+    static PostgreSQLContainer postgres = new PostgreSQLContainer(DockerImageName
             .parse(POSTGRESQL_IMAGE_NAME)
             .withTag(POSTGRESQL_VERSION));
 

@@ -4,11 +4,13 @@ import lombok.EqualsAndHashCode;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @EqualsAndHashCode
 public class OffsetBasedPageRequest implements Pageable, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -35826477329623545L;
 
     private int limit;

@@ -3,6 +3,7 @@ package dev.vality.orgmanager.repository;
 import dev.vality.orgmanager.entity.OrganizationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.NativeQuery;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -35,5 +36,18 @@ public interface OrganizationRepository extends JpaRepository<OrganizationEntity
     List<OrganizationEntity> findAllByMember(String userId, String continuationId);
 
     Set<OrganizationEntity> findAllByOwner(String owner);
+
+    boolean existsByParty(String party);
+
+    List<OrganizationEntity> findAllByOrderByIdDesc(Pageable pageable);
+
+    List<OrganizationEntity> findByIdLessThanOrderByIdDesc(String id, Pageable pageable);
+
+    List<OrganizationEntity> findByStatusOrderByIdDesc(String status, Pageable pageable);
+
+    List<OrganizationEntity> findByStatusAndIdLessThanOrderByIdDesc(
+            String status,
+            String id,
+            Pageable pageable);
 
 }

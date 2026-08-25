@@ -42,4 +42,6 @@ public class OrganizationEntity implements Serializable {
     private String owner;
     private String party;
     private String metadata;
+    @Builder.Default
+    private String status = "active";
 }

@@ -34,7 +34,13 @@ public class UserServiceImpl implements UserService {
         return new UserInfo(
                 user.orElse(null),
                 Stream.concat(memberOrganizations.stream(), ownedOrganizations.stream())
+                        .filter(this::isActive)
                         .collect(Collectors.toSet())
         );
+    }
+
+    private boolean isActive(OrganizationEntity organization) {
+        return organization.getStatus() == null
+                || !organization.getStatus().equalsIgnoreCase("deactivated");
     }
 }

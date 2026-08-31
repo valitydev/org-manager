@@ -14,18 +14,25 @@ import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
 import dev.vality.orgmanager.entity.OrganizationRoleEntity;
+import dev.vality.orgmanager.entity.StoredInvitationStatus;
+import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 @Component
 public class AdminManagementConverter {
+
+    private static final String NULL_METADATA = "null";
 
     public Organization toOrganization(OrganizationEntity entity) {
         Organization organization = new Organization(
@@ -35,8 +42,9 @@ public class AdminManagementConverter {
                 entity.getName(),
                 formatDateTime(entity.getCreatedAt()),
                 toOrganizationStatus(entity.getStatus()));
-        if (entity.getMetadata() != null) {
-            organization.setMetadata(entity.getMetadata());
+        String metadata = metadataOrNull(entity.getMetadata());
+        if (metadata != null) {
+            organization.setMetadata(metadata);
         }
         return organization;
     }
@@ -55,10 +63,39 @@ public class AdminManagementConverter {
         return member;
     }
 
+    /**
+     * Собирает участников из плоской выборки {@code member x member_role}. Строки без
+     * memberRoleId — участники без активных ролей в организации, у них список ролей пустой.
+     */
+    public List<Member> toMembers(List<MemberWithRoleDto> rows) {
+        Map<String, Member> members = new LinkedHashMap<>();
+        for (MemberWithRoleDto row : collectionOrEmpty(rows)) {
+            Member member = members.computeIfAbsent(row.getId(), id -> {
+                Member created = new Member(id, new ArrayList<>());
+                if (row.getEmail() != null) {
+                    created.setEmail(row.getEmail());
+                }
+                return created;
+            });
+            if (row.getMemberRoleId() != null) {
+                member.getRoles().add(toMemberRole(row));
+            }
+        }
+        return List.copyOf(members.values());
+    }
+
     public MemberRole toMemberRole(MemberRoleEntity entity) {
         MemberRole role = new MemberRole(entity.getId(), entity.getRoleId());
         if (entity.getScopeId() != null) {
-            role.setScope(toRoleScope(entity));
+            role.setScope(toRoleScope(entity.getScopeId(), entity.getResourceId()));
+        }
+        return role;
+    }
+
+    private MemberRole toMemberRole(MemberWithRoleDto row) {
+        MemberRole role = new MemberRole(row.getMemberRoleId(), row.getRoleId());
+        if (row.getScopeId() != null) {
+            role.setScope(toRoleScope(row.getScopeId(), row.getResourceId()));
         }
         return role;
     }
@@ -66,7 +103,7 @@ public class AdminManagementConverter {
     public RoleAssignment toRoleAssignment(MemberRoleEntity entity) {
         RoleAssignment assignment = new RoleAssignment(entity.getRoleId());
         if (entity.getScopeId() != null) {
-            assignment.setScope(toRoleScope(entity));
+            assignment.setScope(toRoleScope(entity.getScopeId(), entity.getResourceId()));
         }
         return assignment;
     }
@@ -84,8 +121,9 @@ public class AdminManagementConverter {
                 entity.getInviteeContactEmail(),
                 roles,
                 effectiveInvitationStatus(entity));
-        if (entity.getMetadata() != null) {
-            invitation.setMetadata(entity.getMetadata());
+        String metadata = metadataOrNull(entity.getMetadata());
+        if (metadata != null) {
+            invitation.setMetadata(metadata);
         }
         if (entity.getAcceptedAt() != null) {
             invitation.setAcceptedAt(formatDateTime(entity.getAcceptedAt()));
@@ -119,10 +157,10 @@ public class AdminManagementConverter {
         return new OrganizationRole(entity.getRoleId(), entity.getName(), scopeIds);
     }
 
-    private RoleScope toRoleScope(MemberRoleEntity entity) {
-        RoleScope scope = new RoleScope(entity.getScopeId());
-        if (entity.getResourceId() != null) {
-            scope.setResourceId(entity.getResourceId());
+    private RoleScope toRoleScope(String scopeId, String resourceId) {
+        RoleScope scope = new RoleScope(scopeId);
+        if (resourceId != null) {
+            scope.setResourceId(resourceId);
         }
         return scope;
     }
@@ -135,7 +173,17 @@ public class AdminManagementConverter {
     }
 
     private InvitationStatus toInvitationStatus(String status) {
-        return InvitationStatus.valueOf(status.toLowerCase(Locale.ROOT));
+        return switch (StoredInvitationStatus.fromValue(status)) {
+            case PENDING -> InvitationStatus.pending;
+            case ACCEPTED -> InvitationStatus.accepted;
+            case EXPIRED -> InvitationStatus.expired;
+            case REVOKED -> InvitationStatus.revoked;
+        };
+    }
+
+
+    private String metadataOrNull(String metadata) {
+        return metadata == null || NULL_METADATA.equals(metadata.strip()) ? null : metadata;
     }
 
     private String formatDateTime(LocalDateTime dateTime) {

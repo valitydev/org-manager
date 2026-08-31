@@ -9,6 +9,7 @@ import dev.vality.orgmanagement.InvitationStatus;
 import dev.vality.orgmanagement.ListInvitationsRequest;
 import dev.vality.orgmanagement.ListOrganizationsRequest;
 import dev.vality.orgmanagement.MemberRoleNotFound;
+import dev.vality.orgmanagement.OrganizationNotFound;
 import dev.vality.orgmanagement.OrganizationStatus;
 import dev.vality.orgmanagement.PartyAlreadyBound;
 import dev.vality.orgmanagement.RevokeInvitationRequest;
@@ -23,12 +24,15 @@ import dev.vality.orgmanager.repository.MemberRepository;
 import dev.vality.orgmanager.repository.MemberRoleRepository;
 import dev.vality.orgmanager.repository.OrganizationRepository;
 import dev.vality.orgmanager.repository.OrganizationRoleRepository;
+import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
+import dev.vality.orgmanager.util.JsonCodec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,6 +42,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -76,7 +81,8 @@ class AdminManagementServiceTest {
                 invitationRepository,
                 new AdminManagementConverter(),
                 inviteTokenProperties,
-                mailMessageSender);
+                mailMessageSender,
+                new JsonCodec(JsonMapper.builder().build()));
     }
 
     @Test
@@ -202,6 +208,89 @@ class AdminManagementServiceTest {
         assertEquals(InvitationStatus.pending, result.getStatus());
         assertEquals("user@example.com", result.getEmail());
         verify(mailMessageSender).send(any(String.class), eq("user@example.com"));
+    }
+
+    @Test
+    void shouldTreatMetadataWrittenByRestAsAbsentWhenItIsJsonNull() throws Exception {
+        OrganizationEntity organization = organization("org", OrganizationStatus.active);
+        // REST-слой пишет метаданные через JsonCodec, поэтому при их отсутствии в базе лежит "null"
+        organization.setMetadata("null");
+        when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
+
+        assertFalse(service.getOrganization("org").isSetMetadata());
+    }
+
+    @Test
+    void shouldRejectMetadataThatRestWouldFailToRead() {
+        CreateOrganizationRequest request = new CreateOrganizationRequest("party", "owner", "name")
+                .setMetadata("not a json");
+
+        assertThrows(IllegalArgumentException.class, () -> service.createOrganization(request));
+        verifyNoInteractions(memberRepository);
+    }
+
+    @Test
+    void shouldListMembersIncludingOnesWithoutRoles() throws Exception {
+        when(organizationRepository.existsById("org")).thenReturn(true);
+        when(memberRepository.getOrgMemberListWithRoles("org")).thenReturn(List.of(
+                memberRow("user-1", "user-1@example.com", "role-1", "manager"),
+                memberRow("user-1", "user-1@example.com", "role-2", "accountant"),
+                memberRow("user-2", "user-2@example.com", null, null)));
+
+        var members = service.listMembers("org");
+
+        assertEquals(List.of("user-1", "user-2"), members.stream().map(it -> it.getId()).toList());
+        assertEquals(List.of("manager", "accountant"),
+                members.get(0).getRoles().stream().map(it -> it.getRoleId()).toList());
+        assertTrue(members.get(1).getRoles().isEmpty());
+        assertEquals("user-2@example.com", members.get(1).getEmail());
+    }
+
+    @Test
+    void shouldRejectListingMembersOfUnknownOrganization() {
+        when(organizationRepository.existsById("org")).thenReturn(false);
+
+        assertThrows(OrganizationNotFound.class, () -> service.listMembers("org"));
+        verifyNoInteractions(memberRepository);
+    }
+
+    private MemberWithRoleDto memberRow(String memberId, String email, String roleId, String role) {
+        return new MemberWithRoleDto() {
+            @Override
+            public String getId() {
+                return memberId;
+            }
+
+            @Override
+            public String getEmail() {
+                return email;
+            }
+
+            @Override
+            public String getMemberRoleId() {
+                return roleId;
+            }
+
+            @Override
+            public String getOrganizationId() {
+                return "org";
+            }
+
+            @Override
+            public String getRoleId() {
+                return role;
+            }
+
+            @Override
+            public String getScopeId() {
+                return null;
+            }
+
+            @Override
+            public String getResourceId() {
+                return null;
+            }
+        };
     }
 
     private OrganizationEntity organization(String id, OrganizationStatus status) {

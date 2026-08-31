@@ -29,14 +29,16 @@ import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
 import dev.vality.orgmanager.entity.OrganizationRoleEntity;
+import dev.vality.orgmanager.entity.StoredInvitationStatus;
+import dev.vality.orgmanager.entity.StoredInviteeContactType;
 import dev.vality.orgmanager.repository.InvitationRepository;
 import dev.vality.orgmanager.repository.MemberRepository;
 import dev.vality.orgmanager.repository.MemberRoleRepository;
 import dev.vality.orgmanager.repository.OrganizationRepository;
 import dev.vality.orgmanager.repository.OrganizationRoleRepository;
-import dev.vality.swag.organizations.model.InvitationStatusName;
-import dev.vality.swag.organizations.model.InviteeContact;
+import dev.vality.orgmanager.util.JsonCodec;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -53,6 +55,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -72,10 +75,12 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     private final AdminManagementConverter converter;
     private final InviteTokenProperties inviteTokenProperties;
     private final MailMessageSender mailMessageSender;
+    private final JsonCodec jsonCodec;
 
     @Override
     @Transactional
     public Organization createOrganization(CreateOrganizationRequest request) throws PartyAlreadyBound {
+        log.info("Create organization: partyId={}, ownerId={}", request.getPartyId(), request.getOwnerId());
         if (organizationRepository.existsByParty(request.getPartyId())) {
             throw new PartyAlreadyBound();
         }
@@ -84,7 +89,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
                 .party(request.getPartyId())
                 .owner(request.getOwnerId())
                 .name(request.getName())
-                .metadata(request.getMetadata())
+                .metadata(toStoredMetadata(request.getMetadata()))
                 .createdAt(LocalDateTime.now())
                 .status(ACTIVE_STATUS)
                 .members(new HashSet<>())
@@ -99,11 +104,13 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
 
     @Override
     public Organization getOrganization(String organizationId) throws OrganizationNotFound {
+        log.info("Get organization: organizationId={}", organizationId);
         return converter.toOrganization(findOrganization(organizationId));
     }
 
     @Override
     public ListOrganizationsResult listOrganizations(ListOrganizationsRequest request) {
+        log.info("List organizations: request={}", request);
         ListOrganizationsRequest safeRequest = request == null ? new ListOrganizationsRequest() : request;
         int limit = organizationLimit(safeRequest);
         Pageable pageable = PageRequest.of(0, limit + 1);
@@ -125,6 +132,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     @Override
     @Transactional
     public Organization renameOrganization(String organizationId, String name) throws OrganizationNotFound {
+        log.info("Rename organization: organizationId={}, name={}", organizationId, name);
         OrganizationEntity organization = findOrganization(organizationId);
         organization.setName(name);
         return converter.toOrganization(organizationRepository.save(organization));
@@ -134,6 +142,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     @Transactional
     public Organization deactivateOrganization(String organizationId)
             throws OrganizationNotFound, InvalidOrganizationState {
+        log.info("Deactivate organization: organizationId={}", organizationId);
         return changeOrganizationStatus(organizationId, ACTIVE_STATUS, DEACTIVATED_STATUS);
     }
 
@@ -141,28 +150,32 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     @Transactional
     public Organization activateOrganization(String organizationId)
             throws OrganizationNotFound, InvalidOrganizationState {
+        log.info("Activate organization: organizationId={}", organizationId);
         return changeOrganizationStatus(organizationId, DEACTIVATED_STATUS, ACTIVE_STATUS);
     }
 
     @Override
     public Member getMember(String organizationId, String userId)
             throws OrganizationNotFound, MemberNotFound {
+        log.info("Get member: organizationId={}, userId={}", organizationId, userId);
         OrganizationEntity organization = findOrganization(organizationId);
         return converter.toMember(findMember(organization, userId), organizationId);
     }
 
     @Override
     public List<Member> listMembers(String organizationId) throws OrganizationNotFound {
-        OrganizationEntity organization = findOrganization(organizationId);
-        return collectionOrEmpty(organization.getMembers()).stream()
-                .sorted(Comparator.comparing(MemberEntity::getId))
-                .map(member -> converter.toMember(member, organizationId))
-                .toList();
+        log.info("List members: organizationId={}", organizationId);
+        if (!organizationRepository.existsById(organizationId)) {
+            throw new OrganizationNotFound();
+        }
+        return converter.toMembers(memberRepository.getOrgMemberListWithRoles(organizationId));
     }
 
     @Override
     @Transactional
     public Member addMember(String organizationId, AddMemberRequest request) throws OrganizationNotFound {
+        log.info("Add member: organizationId={}, userId={}", organizationId, request.getUserId());
+        // TODO: email в AddMemberRequest опционален, но колонка member.email объявлена NOT NULL
         OrganizationEntity organization = findOrganization(organizationId);
         MemberEntity member = memberRepository.findById(request.getUserId())
                 .orElseGet(() -> MemberEntity.builder()
@@ -185,6 +198,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     @Transactional
     public void removeMember(String organizationId, String userId)
             throws OrganizationNotFound, MemberNotFound {
+        log.info("Remove member: organizationId={}, userId={}", organizationId, userId);
         OrganizationEntity organization = findOrganization(organizationId);
         MemberEntity member = findMember(organization, userId);
 
@@ -214,6 +228,8 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
             String organizationId,
             String userId,
             AssignMemberRoleRequest request) throws OrganizationNotFound, MemberNotFound {
+        log.info("Assign member role: organizationId={}, userId={}, roleId={}",
+                organizationId, userId, request.getRoleId());
         OrganizationEntity organization = findOrganization(organizationId);
         MemberEntity member = findMember(organization, userId);
         MemberRoleEntity role = toMemberRoleEntity(organizationId, request.getRoleId(), request.getScope());
@@ -229,6 +245,12 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     @Transactional
     public void removeMemberRole(String organizationId, String userId, String memberRoleId)
             throws OrganizationNotFound, MemberNotFound, MemberRoleNotFound {
+        log.info("Remove member role: organizationId={}, userId={}, memberRoleId={}",
+                organizationId, userId, memberRoleId);
+        // TODO: REST-слой запрещает снимать последнюю активную роль участника в организации
+        //  (OrganizationService.removeMemberRole -> LastRoleException), административный контракт
+        //  это ограничение не повторяет. Нужно либо добавить проверку и исключение в контракт,
+        //  либо явно задокументировать расхождение в admin_management.thrift.
         OrganizationEntity organization = findOrganization(organizationId);
         MemberEntity member = findMember(organization, userId);
         MemberRoleEntity role = collectionOrEmpty(member.getRoles()).stream()
@@ -248,6 +270,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     @Override
     public OrganizationRole getOrganizationRole(String organizationId, String roleId)
             throws OrganizationNotFound {
+        log.info("Get organization role: organizationId={}, roleId={}", organizationId, roleId);
         findOrganization(organizationId);
         OrganizationRoleEntity role = organizationRoleRepository.findByOrganizationIdAndRoleId(organizationId, roleId)
                 .orElseThrow(OrganizationNotFound::new);
@@ -256,6 +279,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
 
     @Override
     public List<OrganizationRole> listOrganizationRoles(String organizationId) throws OrganizationNotFound {
+        log.info("List organization roles: organizationId={}", organizationId);
         OrganizationEntity organization = findOrganization(organizationId);
         return collectionOrEmpty(organization.getRoles()).stream()
                 .sorted(Comparator.comparing(OrganizationRoleEntity::getRoleId))
@@ -267,6 +291,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     @Transactional
     public Invitation createInvitation(String organizationId, CreateInvitationRequest request)
             throws OrganizationNotFound {
+        log.info("Create invitation: organizationId={}, email={}", organizationId, request.getEmail());
         findOrganization(organizationId);
         Set<MemberRoleEntity> roles = request.getRoles().stream()
                 .map(role -> toMemberRoleEntity(organizationId, role.getRoleId(), role.getScope()))
@@ -278,11 +303,11 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
                 .createdAt(now)
                 .expiresAt(now.plusDays(inviteTokenProperties.getLifeTimeInDays()))
                 .acceptToken(UUID.randomUUID().toString())
-                .inviteeContactType(InviteeContact.TypeEnum.E_MAIL.getValue())
+                .inviteeContactType(StoredInviteeContactType.EMAIL.getValue())
                 .inviteeContactEmail(request.getEmail())
                 .inviteeRoles(roles)
-                .metadata(request.getMetadata())
-                .status(InvitationStatusName.PENDING.getValue())
+                .metadata(toStoredMetadata(request.getMetadata()))
+                .status(StoredInvitationStatus.PENDING.getValue())
                 .build();
         invitation = invitationRepository.save(invitation);
         mailMessageSender.send(invitation.getAcceptToken(), invitation.getInviteeContactEmail());
@@ -292,6 +317,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     @Override
     public Invitation getInvitation(String organizationId, String invitationId)
             throws OrganizationNotFound, InvitationNotFound {
+        log.info("Get invitation: organizationId={}, invitationId={}", organizationId, invitationId);
         findOrganization(organizationId);
         InvitationEntity invitation = invitationRepository.findByIdAndOrganizationId(invitationId, organizationId)
                 .orElseThrow(InvitationNotFound::new);
@@ -301,6 +327,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     @Override
     public List<Invitation> listInvitations(String organizationId, ListInvitationsRequest request)
             throws OrganizationNotFound {
+        log.info("List invitations: organizationId={}, request={}", organizationId, request);
         findOrganization(organizationId);
         InvitationStatus status = request == null ? null : request.getStatus();
         return invitationRepository.findByOrganizationId(organizationId).stream()
@@ -314,6 +341,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     @Transactional
     public void revokeInvitation(String organizationId, String invitationId, RevokeInvitationRequest request)
             throws OrganizationNotFound, InvitationNotFound, InvalidOrganizationState {
+        log.info("Revoke invitation: organizationId={}, invitationId={}", organizationId, invitationId);
         findOrganization(organizationId);
         InvitationEntity invitation = invitationRepository.findByIdAndOrganizationId(invitationId, organizationId)
                 .orElseThrow(InvitationNotFound::new);
@@ -321,7 +349,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
         if (status != InvitationStatus.pending) {
             throw new InvalidOrganizationState("Only a pending invitation can be revoked");
         }
-        invitation.setStatus(InvitationStatusName.REVOKED.getValue());
+        invitation.setStatus(StoredInvitationStatus.REVOKED.getValue());
         invitation.setRevocationReason(request.getReason());
         invitation.setRevokedAt(LocalDateTime.now());
         invitationRepository.save(invitation);
@@ -359,6 +387,17 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
         }
         organization.setStatus(target);
         return converter.toOrganization(organizationRepository.save(organization));
+    }
+
+    private String toStoredMetadata(String metadata) {
+        if (metadata == null) {
+            return null;
+        }
+        try {
+            return jsonCodec.toJson(jsonCodec.toMap(metadata));
+        } catch (RuntimeException exception) {
+            throw new IllegalArgumentException("Metadata is expected to be a JSON object", exception);
+        }
     }
 
     private OrganizationEntity findOrganization(String organizationId) throws OrganizationNotFound {

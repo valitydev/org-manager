@@ -73,16 +73,28 @@ class AdminManagementServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AdminManagementService(
+        AdminManagementConverter converter = new AdminManagementConverter();
+        AdminCommonService commonService = new AdminCommonService(
                 organizationRepository,
-                memberRepository,
-                memberRoleRepository,
-                organizationRoleRepository,
-                invitationRepository,
-                new AdminManagementConverter(),
-                inviteTokenProperties,
-                mailMessageSender,
                 new JsonCodec(JsonMapper.builder().build()));
+        service = new AdminManagementService(
+                new AdminOrganizationService(
+                        organizationRepository,
+                        organizationRoleRepository,
+                        converter,
+                        commonService),
+                new AdminMemberService(
+                        organizationRepository,
+                        memberRepository,
+                        memberRoleRepository,
+                        converter,
+                        commonService),
+                new AdminInvitationService(
+                        invitationRepository,
+                        inviteTokenProperties,
+                        mailMessageSender,
+                        converter,
+                        commonService));
     }
 
     @Test

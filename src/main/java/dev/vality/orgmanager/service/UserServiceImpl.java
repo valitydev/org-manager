@@ -2,6 +2,7 @@ package dev.vality.orgmanager.service;
 
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
+import dev.vality.orgmanager.entity.StoredOrganizationStatus;
 import dev.vality.orgmanager.service.model.UserInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,6 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean isActive(OrganizationEntity organization) {
-        return organization.getStatus() == null
-                || !organization.getStatus().equalsIgnoreCase("deactivated");
+        return StoredOrganizationStatus.ACTIVE.matches(organization.getStatus());
     }
 }

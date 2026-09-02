@@ -2,6 +2,7 @@ package dev.vality.orgmanager.converter;
 
 import dev.vality.orgmanager.config.properties.InviteTokenProperties;
 import dev.vality.orgmanager.entity.InvitationEntity;
+import dev.vality.orgmanager.entity.StoredInvitationStatus;
 import dev.vality.orgmanager.util.JsonCodec;
 import dev.vality.swag.organizations.model.*;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,7 @@ public class InvitationConverter {
                         .map(role -> memberRoleConverter.toEntity(role, orgId))
                         .collect(toSet()))
                 .metadata(jsonCodec.toJson(invitation.getMetadata()))
-                .status(InvitationStatusName.PENDING.getValue())
+                .status(StoredInvitationStatus.PENDING.getValue())
                 .acceptToken(UUID.randomUUID().toString()) // TODO [a.romanov]: token
                 .build();
     }

@@ -32,6 +32,32 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String> {
             "     AND m.id = mtmr.member_id ")
     List<MemberWithRoleDto> getOrgMemberList(String orgId);
 
+    /**
+     * То же, что {@link #getOrgMemberList(String)}, но джойн ролей внешний: участник без активных
+     * ролей в организации тоже попадает в выдачу. Административный контракт умеет добавлять
+     * участника без роли (AddMember), и такой участник не должен пропадать из списка.
+     * У строк для участника без ролей memberRoleId == null.
+     */
+    @NativeQuery("SELECT m.id, " +
+            "              m.email, " +
+            "              mr.id as memberRoleId, " +
+            "              mr.organization_id as organizationId, " +
+            "              mr.role_id as roleId, " +
+            "              mr.scope_id as scopeId, " +
+            "              mr.resource_id as resourceId" +
+            " FROM org_manager.member_to_organization mto " +
+            "     JOIN org_manager.member m " +
+            "       ON m.id = mto.member_id " +
+            "     LEFT JOIN org_manager.member_to_member_role mtmr " +
+            "       ON mtmr.member_id = m.id " +
+            "     LEFT JOIN org_manager.member_role mr " +
+            "       ON mr.id = mtmr.member_role_id " +
+            "      AND mr.active IS TRUE " +
+            "      AND mr.organization_id = mto.organization_id " +
+            " WHERE mto.organization_id = ?1 " +
+            " ORDER BY m.id, mr.id ")
+    List<MemberWithRoleDto> getOrgMemberListWithRoles(String orgId);
+
     boolean existsById(String id);
 
 

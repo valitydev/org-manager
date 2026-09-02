@@ -2,6 +2,7 @@ package dev.vality.orgmanager.service;
 
 import dev.vality.orgmanager.converter.InvitationConverter;
 import dev.vality.orgmanager.entity.InvitationEntity;
+import dev.vality.orgmanager.entity.StoredInvitationStatus;
 import dev.vality.orgmanager.exception.InviteAlreadyAcceptedException;
 import dev.vality.orgmanager.exception.InviteExpiredException;
 import dev.vality.orgmanager.exception.InviteRevokedException;
@@ -102,7 +103,7 @@ public class InvitationService {
         Stream<InvitationEntity> invitationEntity = invitationRepository.findAllPendingStatus();
         invitationEntity.forEach(invitation -> {
             if (invitation.getExpiresAt().isBefore(LocalDateTime.now())) {
-                invitation.setStatus(InvitationStatusName.EXPIRED.getValue());
+                invitation.setStatus(StoredInvitationStatus.EXPIRED.getValue());
             }
         });
     }
@@ -118,17 +119,17 @@ public class InvitationService {
         if (invitationEntity.isExpired()) {
             throw new InviteExpiredException(invitationEntity.getExpiresAt().toString());
         }
-        if (invitationEntity.getStatus().equalsIgnoreCase(InvitationStatusName.REVOKED.getValue())) {
+        if (StoredInvitationStatus.REVOKED.matches(invitationEntity.getStatus())) {
             throw new InviteRevokedException(invitationEntity.getRevocationReason());
         }
-        if (invitationEntity.getStatus().equalsIgnoreCase(InvitationStatusName.ACCEPTED.getValue())) {
+        if (StoredInvitationStatus.ACCEPTED.matches(invitationEntity.getStatus())) {
             throw new InviteAlreadyAcceptedException(invitationEntity.getAcceptedAt().toString());
         }
     }
 
     private boolean isExpiredPendingInvitation(InvitationEntity invitationEntity) {
         return invitationEntity.getStatus() != null
-                && invitationEntity.getStatus().equalsIgnoreCase(InvitationStatusName.PENDING.getValue())
+                && StoredInvitationStatus.PENDING.matches(invitationEntity.getStatus())
                 && invitationEntity.isExpired();
     }
 

@@ -2,6 +2,7 @@ package dev.vality.orgmanager.service;
 
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
+import dev.vality.orgmanager.entity.StoredOrganizationStatus;
 import dev.vality.orgmanager.service.model.UserInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,12 @@ public class UserServiceImpl implements UserService {
         return new UserInfo(
                 user.orElse(null),
                 Stream.concat(memberOrganizations.stream(), ownedOrganizations.stream())
+                        .filter(this::isActive)
                         .collect(Collectors.toSet())
         );
+    }
+
+    private boolean isActive(OrganizationEntity organization) {
+        return StoredOrganizationStatus.ACTIVE.matches(organization.getStatus());
     }
 }

@@ -26,7 +26,7 @@
         <keycloak.version>26.7.2</keycloak.version>
         <schedlock.version>7.7.0</schedlock.version>
         <swag.organizations.version>1.38-8c9b968</swag.organizations.version>
-        <damsel.version>1.685-5c25c2e</damsel.version>
+        <damsel.version>1.699-7280b62</damsel.version>
         <shared-resources.version>5.0.0</shared-resources.version>
         <woody.version>3.0.0</woody.version>
     </properties>
@@ -60,7 +60,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>org-management-proto</artifactId>
-            <version>1.18-6b1eb95</version>
+            <version>1.19-e5d3e5f</version>
             <exclusions>
                 <exclusion>
                     <groupId>dev.vality</groupId>

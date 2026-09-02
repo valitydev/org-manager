@@ -297,7 +297,7 @@ public class OrganizationService {
     private void acceptInvitation(String userId, InvitationEntity invitationEntity) {
         invitationEntity.setAcceptedAt(LocalDateTime.now());
         invitationEntity.setAcceptedMemberId(userId);
-        invitationEntity.setStatus(InvitationStatusName.ACCEPTED.getValue());
+        invitationEntity.setStatus(StoredInvitationStatus.ACCEPTED.getValue());
     }
 
     @Transactional(readOnly = true)

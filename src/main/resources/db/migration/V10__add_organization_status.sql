@@ -1,0 +1,2 @@
+ALTER TABLE org_manager.organization
+    ADD COLUMN IF NOT EXISTS status CHARACTER VARYING NOT NULL DEFAULT 'active';

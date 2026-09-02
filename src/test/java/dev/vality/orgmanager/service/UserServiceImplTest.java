@@ -124,4 +124,19 @@ class UserServiceImplTest extends AbstractRepositoryTest {
         assertEquals(1, userInfo.getOrganizations().size());
         assertEquals(organization.getId(), userInfo.getOrganizations().iterator().next().getId());
     }
+
+    @Test
+    void doesNotExposeDeactivatedOrganizationInUserContext() {
+        String memberId = TestObjectFactory.randomString();
+        MemberEntity member = TestObjectFactory.testMemberEntity(memberId);
+        OrganizationEntity organization = TestObjectFactory.buildOrganization(member);
+        organization.setStatus("deactivated");
+        memberRepository.save(member);
+        organizationRepository.save(organization);
+
+        UserInfo userInfo = userService.findById(memberId);
+
+        assertEquals(memberId, userInfo.getMember().getId());
+        assertTrue(userInfo.getOrganizations().isEmpty());
+    }
 }

@@ -1,5 +1,7 @@
 package dev.vality.orgmanager.config;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity(prePostEnabled = true)
 @ConditionalOnProperty(value = "auth.enabled", havingValue = "true")
 public class SecurityConfig {
+
+    private static final String ADMIN_MANAGEMENT_PATH = "/admin-management";
+
+    @Value("${server.port}")
+    private int thriftPort;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -39,9 +46,15 @@ public class SecurityConfig {
                                 "/actuator/prometheus"
                         ).permitAll()
                         .requestMatchers("/auth-context").permitAll()
+                        .requestMatchers(this::isThriftAdminManagementRequest).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(config -> config.jwt(Customizer.withDefaults()));
         return http.build();
+    }
+
+    private boolean isThriftAdminManagementRequest(HttpServletRequest request) {
+        return request.getLocalPort() == thriftPort
+                && (request.getContextPath() + ADMIN_MANAGEMENT_PATH).equals(request.getRequestURI());
     }
 
     @Bean

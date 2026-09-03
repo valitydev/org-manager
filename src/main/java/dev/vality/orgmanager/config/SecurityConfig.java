@@ -1,5 +1,6 @@
 package dev.vality.orgmanager.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity(prePostEnabled = true)
 @ConditionalOnProperty(value = "auth.enabled", havingValue = "true")
 public class SecurityConfig {
+
+    @Value("${server.port}")
+    private int thriftPort;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -39,6 +43,8 @@ public class SecurityConfig {
                                 "/actuator/prometheus"
                         ).permitAll()
                         .requestMatchers("/auth-context").permitAll()
+                        .requestMatchers(request -> "/admin-management".equals(request.getRequestURI())
+                                && request.getLocalPort() == thriftPort).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(config -> config.jwt(Customizer.withDefaults()));
         return http.build();

@@ -2,6 +2,9 @@ package dev.vality.orgmanager.service;
 
 import dev.vality.orgmanagement.AddMemberRequest;
 import dev.vality.orgmanagement.AssignMemberRoleRequest;
+import dev.vality.orgmanagement.InvalidRequest;
+import dev.vality.orgmanagement.ListMembersRequest;
+import dev.vality.orgmanagement.ListMembersResult;
 import dev.vality.orgmanagement.Member;
 import dev.vality.orgmanagement.MemberNotFound;
 import dev.vality.orgmanagement.MemberRole;
@@ -16,6 +19,8 @@ import dev.vality.orgmanager.repository.MemberRoleRepository;
 import dev.vality.orgmanager.repository.OrganizationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +39,9 @@ import static dev.vality.orgmanager.service.AdminCommonService.collectionOrEmpty
 @RequiredArgsConstructor
 public class AdminMemberService {
 
+    static final int DEFAULT_MEMBER_LIMIT = 20;
+    static final int MAX_MEMBER_LIMIT = 1000;
+
     private final OrganizationRepository organizationRepository;
     private final MemberRepository memberRepository;
     private final MemberRoleRepository memberRoleRepository;
@@ -48,28 +56,48 @@ public class AdminMemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> list(String organizationId) throws OrganizationNotFound {
-        log.info("List members: organizationId={}", organizationId);
+    public ListMembersResult list(String organizationId, ListMembersRequest request) throws OrganizationNotFound {
+        log.info("List members: organizationId={}, request={}", organizationId, request);
         if (!organizationRepository.existsById(organizationId)) {
             throw new OrganizationNotFound();
         }
-        return converter.toMembers(memberRepository.getOrgMemberListWithRoles(organizationId));
+        ListMembersRequest safeRequest = request == null ? new ListMembersRequest() : request;
+        int limit = memberLimit(safeRequest);
+        Pageable pageable = PageRequest.ofSize(limit + 1);
+        String token = safeRequest.getContinuationToken();
+        List<String> memberIds = new ArrayList<>(token == null
+                ? memberRepository.getOrgMemberIds(organizationId, pageable)
+                : memberRepository.getOrgMemberIds(organizationId, token, pageable));
+
+        String continuationToken = null;
+        if (memberIds.size() > limit) {
+            memberIds = new ArrayList<>(memberIds.subList(0, limit));
+            continuationToken = memberIds.get(memberIds.size() - 1);
+        }
+        List<Member> members = memberIds.isEmpty()
+                ? List.of()
+                : converter.toMembers(memberRepository.getOrgMemberListWithRoles(organizationId, memberIds));
+        ListMembersResult result = new ListMembersResult(members);
+        if (continuationToken != null) {
+            result.setContinuationToken(continuationToken);
+        }
+        return result;
     }
 
     @Transactional
-    public Member add(String organizationId, AddMemberRequest request) throws OrganizationNotFound {
+    public Member add(String organizationId, AddMemberRequest request)
+            throws OrganizationNotFound, InvalidRequest {
         log.info("Add member: organizationId={}, userId={}", organizationId, request.getUserId());
-        // TODO: email в AddMemberRequest опционален, но колонка member.email объявлена NOT NULL
+        String userId = commonService.requireText(request.getUserId(), "User id");
+        String email = commonService.requireText(request.getEmail(), "Email");
         OrganizationEntity organization = commonService.findOrganization(organizationId);
-        MemberEntity member = memberRepository.findById(request.getUserId())
+        MemberEntity member = memberRepository.findById(userId)
                 .orElseGet(() -> MemberEntity.builder()
-                        .id(request.getUserId())
+                        .id(userId)
                         .roles(new HashSet<>())
                         .organizations(new HashSet<>())
                         .build());
-        if (request.isSetEmail()) {
-            member.setEmail(request.getEmail());
-        }
+        member.setEmail(email);
         member = memberRepository.save(member);
         Set<MemberEntity> members = new HashSet<>(collectionOrEmpty(organization.getMembers()));
         members.add(member);
@@ -108,11 +136,12 @@ public class AdminMemberService {
     public MemberRole assignRole(
             String organizationId,
             String userId,
-            AssignMemberRoleRequest request) throws OrganizationNotFound, MemberNotFound {
+            AssignMemberRoleRequest request) throws OrganizationNotFound, MemberNotFound, InvalidRequest {
         log.info("Assign member role: organizationId={}, userId={}, roleId={}",
                 organizationId, userId, request.getRoleId());
         OrganizationEntity organization = commonService.findOrganization(organizationId);
         MemberEntity member = findMember(organization, userId);
+        commonService.validateRoleAssignment(organizationId, request.getRoleId(), request.getScope());
         MemberRoleEntity role = commonService.toMemberRoleEntity(
                 organizationId, request.getRoleId(), request.getScope());
         role = memberRoleRepository.save(role);
@@ -128,10 +157,6 @@ public class AdminMemberService {
             throws OrganizationNotFound, MemberNotFound, MemberRoleNotFound {
         log.info("Remove member role: organizationId={}, userId={}, memberRoleId={}",
                 organizationId, userId, memberRoleId);
-        // TODO: REST-слой запрещает снимать последнюю активную роль участника в организации
-        //  (OrganizationService.removeMemberRole -> LastRoleException), административный контракт
-        //  это ограничение не повторяет. Нужно либо добавить проверку и исключение в контракт,
-        //  либо явно задокументировать расхождение в admin_management.thrift.
         OrganizationEntity organization = commonService.findOrganization(organizationId);
         MemberEntity member = findMember(organization, userId);
         MemberRoleEntity role = collectionOrEmpty(member.getRoles()).stream()
@@ -146,6 +171,13 @@ public class AdminMemberService {
         member.setRoles(roles);
         memberRoleRepository.save(role);
         memberRepository.save(member);
+    }
+
+    private int memberLimit(ListMembersRequest request) {
+        if (!request.isSetLimit() || request.getLimit() <= 0) {
+            return DEFAULT_MEMBER_LIMIT;
+        }
+        return Math.min(request.getLimit(), MAX_MEMBER_LIMIT);
     }
 
     private MemberEntity findMember(OrganizationEntity organization, String userId) throws MemberNotFound {

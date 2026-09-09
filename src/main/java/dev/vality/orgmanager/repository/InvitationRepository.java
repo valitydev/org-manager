@@ -1,12 +1,12 @@
 package dev.vality.orgmanager.repository;
 
 import dev.vality.orgmanager.entity.InvitationEntity;
+import jakarta.persistence.QueryHint;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.stereotype.Repository;
-
-import jakarta.persistence.QueryHint;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +15,8 @@ import java.util.stream.Stream;
 import static org.hibernate.jpa.QueryHints.HINT_FETCH_SIZE;
 
 @Repository
-public interface InvitationRepository extends JpaRepository<InvitationEntity, String> {
+public interface InvitationRepository
+        extends JpaRepository<InvitationEntity, String>, JpaSpecificationExecutor<InvitationEntity> {
 
     List<InvitationEntity> findByOrganizationIdAndStatus(String organizationId, String status);
 

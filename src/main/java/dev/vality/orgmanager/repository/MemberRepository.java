@@ -36,25 +36,14 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String> {
 
     /**
      * Страница идентификаторов участников организации, отсортированная по возрастанию id.
+     * continuationToken == null — первая страница, иначе участники строго после указанного id.
      */
     @NativeQuery("SELECT m.id " +
             " FROM org_manager.member_to_organization mto " +
             "     JOIN org_manager.member m " +
             "       ON m.id = mto.member_id " +
             " WHERE mto.organization_id = ?1 " +
-            " ORDER BY m.id ")
-    List<String> getOrgMemberIds(String orgId, Pageable pageable);
-
-    /**
-     * То же, что {@link #getOrgMemberIds(String, Pageable)}, но со сдвигом по continuation token:
-     * возвращаются участники, идущие строго после указанного id.
-     */
-    @NativeQuery("SELECT m.id " +
-            " FROM org_manager.member_to_organization mto " +
-            "     JOIN org_manager.member m " +
-            "       ON m.id = mto.member_id " +
-            " WHERE mto.organization_id = ?1 " +
-            "   AND m.id > ?2 " +
+            "   AND (CAST(?2 AS VARCHAR) IS NULL OR m.id > ?2) " +
             " ORDER BY m.id ")
     List<String> getOrgMemberIds(String orgId, String continuationToken, Pageable pageable);
 

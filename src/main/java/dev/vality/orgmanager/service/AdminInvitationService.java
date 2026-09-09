@@ -18,6 +18,7 @@ import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.StoredInvitationStatus;
 import dev.vality.orgmanager.entity.StoredInviteeContactType;
 import dev.vality.orgmanager.repository.InvitationRepository;
+import dev.vality.orgmanager.service.dto.AdminPage;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
@@ -35,11 +36,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import static dev.vality.orgmanager.service.AdminCommonService.collectionOrEmpty;
 import static dev.vality.orgmanager.service.AdminCommonService.pageLimit;
+import static java.util.Objects.requireNonNullElseGet;
 
 /**
  * Приглашения в организации в административном контракте.
@@ -98,15 +101,14 @@ public class AdminInvitationService {
             throws OrganizationNotFound {
         log.info("List invitations: organizationId={}, request={}", organizationId, request);
         commonService.findOrganization(organizationId);
-        ListInvitationsRequest safeRequest = request == null ? new ListInvitationsRequest() : request;
+        ListInvitationsRequest safeRequest = requireNonNullElseGet(request, ListInvitationsRequest::new);
         int limit = pageLimit(safeRequest.getLimit());
 
-        InvitationEntity cursor = null;
+        Optional<InvitationEntity> cursor = Optional.empty();
         if (safeRequest.isSetContinuationToken()) {
             cursor = invitationRepository
-                    .findByIdAndOrganizationId(safeRequest.getContinuationToken(), organizationId)
-                    .orElse(null);
-            if (cursor == null) {
+                    .findByIdAndOrganizationId(safeRequest.getContinuationToken(), organizationId);
+            if (cursor.isEmpty()) {
                 return new ListInvitationsResult(List.of());
             }
         }
@@ -117,20 +119,14 @@ public class AdminInvitationService {
                 organizationId,
                 safeRequest.isSetStatus() ? safeRequest.getStatus() : null,
                 LocalDateTime.now(),
-                cursor);
-        List<InvitationEntity> page = new ArrayList<>(
-                invitationRepository.findAll(specification, pageable).getContent());
-
-        String continuationToken = null;
-        if (page.size() > limit) {
-            page = new ArrayList<>(page.subList(0, limit));
-            continuationToken = page.get(page.size() - 1).getId();
-        }
+                cursor.orElse(null));
+        AdminPage<InvitationEntity> page = AdminPage.of(
+                invitationRepository.findAll(specification, pageable).getContent(),
+                limit,
+                InvitationEntity::getId);
         ListInvitationsResult result = new ListInvitationsResult(
-                page.stream().map(converter::toInvitation).toList());
-        if (continuationToken != null) {
-            result.setContinuationToken(continuationToken);
-        }
+                page.items().stream().map(converter::toInvitation).toList());
+        page.continuationToken().ifPresent(result::setContinuationToken);
         return result;
     }
 

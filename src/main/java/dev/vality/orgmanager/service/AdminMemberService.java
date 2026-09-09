@@ -17,10 +17,10 @@ import dev.vality.orgmanager.entity.OrganizationEntity;
 import dev.vality.orgmanager.repository.MemberRepository;
 import dev.vality.orgmanager.repository.MemberRoleRepository;
 import dev.vality.orgmanager.repository.OrganizationRepository;
+import dev.vality.orgmanager.service.dto.AdminPage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +31,8 @@ import java.util.Set;
 
 import static dev.vality.orgmanager.service.AdminCommonService.collectionOrEmpty;
 import static dev.vality.orgmanager.service.AdminCommonService.pageLimit;
+import static java.util.Objects.requireNonNullElseGet;
+import static java.util.function.Function.identity;
 
 /**
  * Участники организаций и их роли в административном контракте.
@@ -59,26 +61,18 @@ public class AdminMemberService {
         if (!organizationRepository.existsById(organizationId)) {
             throw new OrganizationNotFound();
         }
-        ListMembersRequest safeRequest = request == null ? new ListMembersRequest() : request;
+        ListMembersRequest safeRequest = requireNonNullElseGet(request, ListMembersRequest::new);
         int limit = pageLimit(safeRequest.getLimit());
-        Pageable pageable = PageRequest.ofSize(limit + 1);
-        String token = safeRequest.getContinuationToken();
-        List<String> memberIds = new ArrayList<>(token == null
-                ? memberRepository.getOrgMemberIds(organizationId, pageable)
-                : memberRepository.getOrgMemberIds(organizationId, token, pageable));
-
-        String continuationToken = null;
-        if (memberIds.size() > limit) {
-            memberIds = new ArrayList<>(memberIds.subList(0, limit));
-            continuationToken = memberIds.get(memberIds.size() - 1);
-        }
-        List<Member> members = memberIds.isEmpty()
-                ? List.of()
-                : converter.toMembers(memberRepository.getOrgMemberListWithRoles(organizationId, memberIds));
-        ListMembersResult result = new ListMembersResult(members);
-        if (continuationToken != null) {
-            result.setContinuationToken(continuationToken);
-        }
+        AdminPage<String> page = AdminPage.of(
+                memberRepository.getOrgMemberIds(
+                        organizationId,
+                        safeRequest.getContinuationToken(),
+                        PageRequest.ofSize(limit + 1)),
+                limit,
+                identity());
+        ListMembersResult result = new ListMembersResult(converter.toMembers(
+                memberRepository.getOrgMemberListWithRoles(organizationId, page.items())));
+        page.continuationToken().ifPresent(result::setContinuationToken);
         return result;
     }
 

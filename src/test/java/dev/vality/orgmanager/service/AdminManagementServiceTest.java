@@ -42,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -476,7 +477,7 @@ class AdminManagementServiceTest {
     @Test
     void shouldListMembersIncludingOnesWithoutRoles() throws Exception {
         when(organizationRepository.existsById("org")).thenReturn(true);
-        when(memberRepository.getOrgMemberIds(eq("org"), any(Pageable.class)))
+        when(memberRepository.getOrgMemberIds(eq("org"), isNull(), any(Pageable.class)))
                 .thenReturn(List.of("user-1", "user-2"));
         when(memberRepository.getOrgMemberListWithRoles(eq("org"), anyCollection())).thenReturn(List.of(
                 memberRow("user-1", "user-1@example.com", "role-1", "manager"),
@@ -497,7 +498,7 @@ class AdminManagementServiceTest {
     @Test
     void shouldReturnContinuationTokenWhenMoreMembersExist() throws Exception {
         when(organizationRepository.existsById("org")).thenReturn(true);
-        when(memberRepository.getOrgMemberIds(eq("org"), any(Pageable.class)))
+        when(memberRepository.getOrgMemberIds(eq("org"), isNull(), any(Pageable.class)))
                 .thenReturn(List.of("user-1", "user-2"));
         when(memberRepository.getOrgMemberListWithRoles(eq("org"), anyCollection())).thenReturn(List.of(
                 memberRow("user-1", "user-1@example.com", null, null)));
@@ -525,9 +526,9 @@ class AdminManagementServiceTest {
     }
 
     @Test
-    void shouldReturnEmptyPageWithoutQueryingMemberRows() throws Exception {
+    void shouldReturnEmptyPageWhenOrganizationHasNoMembers() throws Exception {
         when(organizationRepository.existsById("org")).thenReturn(true);
-        when(memberRepository.getOrgMemberIds(eq("org"), any(Pageable.class))).thenReturn(List.of());
+        when(memberRepository.getOrgMemberIds(eq("org"), isNull(), any(Pageable.class))).thenReturn(List.of());
 
         var result = service.listMembers("org", new ListMembersRequest());
 

@@ -20,6 +20,7 @@ import dev.vality.orgmanager.entity.StoredOrganizationStatus;
 import dev.vality.orgmanager.repository.OrganizationRepository;
 import dev.vality.orgmanager.repository.OrganizationRoleRepository;
 import dev.vality.orgmanager.repository.ScopeRepository;
+import dev.vality.orgmanager.service.dto.AdminPage;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ import java.util.UUID;
 
 import static dev.vality.orgmanager.service.AdminCommonService.collectionOrEmpty;
 import static dev.vality.orgmanager.service.AdminCommonService.pageLimit;
+import static java.util.Objects.requireNonNullElseGet;
 
 /**
  * Организации и их роли в административном контракте.
@@ -101,22 +103,16 @@ public class AdminOrganizationService {
     @Transactional(readOnly = true)
     public ListOrganizationsResult list(ListOrganizationsRequest request) {
         log.info("List organizations: request={}", request);
-        ListOrganizationsRequest safeRequest = request == null ? new ListOrganizationsRequest() : request;
+        ListOrganizationsRequest safeRequest = requireNonNullElseGet(request, ListOrganizationsRequest::new);
         int limit = pageLimit(safeRequest.getLimit());
         Pageable pageable = PageRequest.of(0, limit + 1, Sort.by(Sort.Direction.DESC, "id"));
-        List<OrganizationEntity> entities = new ArrayList<>(
-                organizationRepository.findAll(specification(safeRequest), pageable).getContent());
-
-        String continuationToken = null;
-        if (entities.size() > limit) {
-            entities = new ArrayList<>(entities.subList(0, limit));
-            continuationToken = entities.get(entities.size() - 1).getId();
-        }
+        AdminPage<OrganizationEntity> page = AdminPage.of(
+                organizationRepository.findAll(specification(safeRequest), pageable).getContent(),
+                limit,
+                OrganizationEntity::getId);
         ListOrganizationsResult result = new ListOrganizationsResult(
-                entities.stream().map(converter::toOrganization).toList());
-        if (continuationToken != null) {
-            result.setContinuationToken(continuationToken);
-        }
+                page.items().stream().map(converter::toOrganization).toList());
+        page.continuationToken().ifPresent(result::setContinuationToken);
         return result;
     }
 

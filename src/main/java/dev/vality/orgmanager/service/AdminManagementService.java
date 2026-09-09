@@ -1,25 +1,6 @@
 package dev.vality.orgmanager.service;
 
-import dev.vality.orgmanagement.AddMemberRequest;
-import dev.vality.orgmanagement.AdminManagementSrv;
-import dev.vality.orgmanagement.AssignMemberRoleRequest;
-import dev.vality.orgmanagement.CreateInvitationRequest;
-import dev.vality.orgmanagement.CreateOrganizationRequest;
-import dev.vality.orgmanagement.InvalidOrganizationState;
-import dev.vality.orgmanagement.Invitation;
-import dev.vality.orgmanagement.InvitationNotFound;
-import dev.vality.orgmanagement.ListInvitationsRequest;
-import dev.vality.orgmanagement.ListOrganizationsRequest;
-import dev.vality.orgmanagement.ListOrganizationsResult;
-import dev.vality.orgmanagement.Member;
-import dev.vality.orgmanagement.MemberNotFound;
-import dev.vality.orgmanagement.MemberRole;
-import dev.vality.orgmanagement.MemberRoleNotFound;
-import dev.vality.orgmanagement.Organization;
-import dev.vality.orgmanagement.OrganizationNotFound;
-import dev.vality.orgmanagement.OrganizationRole;
-import dev.vality.orgmanagement.PartyAlreadyBound;
-import dev.vality.orgmanagement.RevokeInvitationRequest;
+import dev.vality.orgmanagement.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,7 +15,8 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     private final AdminInvitationService adminInvitationService;
 
     @Override
-    public Organization createOrganization(CreateOrganizationRequest request) throws PartyAlreadyBound {
+    public Organization createOrganization(CreateOrganizationRequest request)
+            throws PartyAlreadyBound, InvalidRequest {
         return adminOrganizationService.create(request);
     }
 
@@ -44,13 +26,19 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     }
 
     @Override
+    public Organization getOrganizationByParty(String partyId) throws OrganizationNotFound {
+        return adminOrganizationService.getByParty(partyId);
+    }
+
+    @Override
     public ListOrganizationsResult listOrganizations(ListOrganizationsRequest request) {
         return adminOrganizationService.list(request);
     }
 
     @Override
-    public Organization renameOrganization(String organizationId, String name) throws OrganizationNotFound {
-        return adminOrganizationService.rename(organizationId, name);
+    public Organization modifyOrganization(String organizationId, ModifyOrganizationRequest request)
+            throws OrganizationNotFound, InvalidRequest {
+        return adminOrganizationService.modify(organizationId, request);
     }
 
     @Override
@@ -66,7 +54,8 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     }
 
     @Override
-    public OrganizationRole getOrganizationRole(String organizationId, String roleId) throws OrganizationNotFound {
+    public OrganizationRole getOrganizationRole(String organizationId, String roleId)
+            throws OrganizationNotFound, RoleNotFound {
         return adminOrganizationService.getRole(organizationId, roleId);
     }
 
@@ -76,17 +65,25 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     }
 
     @Override
+    public OrganizationRole setOrganizationRole(String organizationId, SetOrganizationRoleRequest request)
+            throws OrganizationNotFound, InvalidRequest {
+        return adminOrganizationService.setRole(organizationId, request);
+    }
+
+    @Override
     public Member getMember(String organizationId, String userId) throws OrganizationNotFound, MemberNotFound {
         return adminMemberService.get(organizationId, userId);
     }
 
     @Override
-    public List<Member> listMembers(String organizationId) throws OrganizationNotFound {
-        return adminMemberService.list(organizationId);
+    public ListMembersResult listMembers(String organizationId, ListMembersRequest request)
+            throws OrganizationNotFound {
+        return adminMemberService.list(organizationId, request);
     }
 
     @Override
-    public Member addMember(String organizationId, AddMemberRequest request) throws OrganizationNotFound {
+    public Member addMember(String organizationId, AddMemberRequest request)
+            throws OrganizationNotFound, InvalidRequest {
         return adminMemberService.add(organizationId, request);
     }
 
@@ -97,7 +94,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
 
     @Override
     public MemberRole assignMemberRole(String organizationId, String userId, AssignMemberRoleRequest request)
-            throws OrganizationNotFound, MemberNotFound {
+            throws OrganizationNotFound, MemberNotFound, InvalidRequest {
         return adminMemberService.assignRole(organizationId, userId, request);
     }
 
@@ -109,7 +106,7 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
 
     @Override
     public Invitation createInvitation(String organizationId, CreateInvitationRequest request)
-            throws OrganizationNotFound {
+            throws OrganizationNotFound, InvalidRequest {
         return adminInvitationService.create(organizationId, request);
     }
 
@@ -120,14 +117,14 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     }
 
     @Override
-    public List<Invitation> listInvitations(String organizationId, ListInvitationsRequest request)
+    public ListInvitationsResult listInvitations(String organizationId, ListInvitationsRequest request)
             throws OrganizationNotFound {
         return adminInvitationService.list(organizationId, request);
     }
 
     @Override
     public void revokeInvitation(String organizationId, String invitationId, RevokeInvitationRequest request)
-            throws OrganizationNotFound, InvitationNotFound, InvalidOrganizationState {
+            throws OrganizationNotFound, InvitationNotFound, InvalidInvitationState {
         adminInvitationService.revoke(organizationId, invitationId, request);
     }
 }

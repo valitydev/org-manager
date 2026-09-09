@@ -2,15 +2,17 @@ package dev.vality.orgmanager.repository;
 
 import dev.vality.orgmanager.entity.OrganizationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.NativeQuery;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
-public interface OrganizationRepository extends JpaRepository<OrganizationEntity, String> {
+public interface OrganizationRepository
+        extends JpaRepository<OrganizationEntity, String>, JpaSpecificationExecutor<OrganizationEntity> {
 
     @NativeQuery(" SELECT * FROM org_manager.organization AS o " +
                     " WHERE o.id IN " +
@@ -39,15 +41,6 @@ public interface OrganizationRepository extends JpaRepository<OrganizationEntity
 
     boolean existsByParty(String party);
 
-    List<OrganizationEntity> findAllByOrderByIdDesc(Pageable pageable);
-
-    List<OrganizationEntity> findByIdLessThanOrderByIdDesc(String id, Pageable pageable);
-
-    List<OrganizationEntity> findByStatusOrderByIdDesc(String status, Pageable pageable);
-
-    List<OrganizationEntity> findByStatusAndIdLessThanOrderByIdDesc(
-            String status,
-            String id,
-            Pageable pageable);
+    Optional<OrganizationEntity> findByParty(String party);
 
 }

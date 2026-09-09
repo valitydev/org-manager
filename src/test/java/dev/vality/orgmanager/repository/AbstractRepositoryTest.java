@@ -47,13 +47,13 @@ public abstract class AbstractRepositoryTest {
     public void setUp() throws Exception {
         invitationRepository.deleteAll();
         memberContextRepository.deleteAll();
+        organizationRoleRepository.deleteAll();
         organizationRepository.deleteAll();
         var members = memberRepository.findAll();
         members.forEach(it -> it.getRoles().clear());
         memberRepository.saveAll(members);
         memberRepository.deleteAll();
         memberRoleRepository.deleteAll();
-        organizationRoleRepository.deleteAll();
     }
 
     @BeforeAll

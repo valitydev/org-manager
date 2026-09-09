@@ -2,10 +2,12 @@ package dev.vality.orgmanager.repository;
 
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -33,10 +35,21 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String> {
     List<MemberWithRoleDto> getOrgMemberList(String orgId);
 
     /**
-     * То же, что {@link #getOrgMemberList(String)}, но джойн ролей внешний: участник без активных
-     * ролей в организации тоже попадает в выдачу. Административный контракт умеет добавлять
-     * участника без роли (AddMember), и такой участник не должен пропадать из списка.
-     * У строк для участника без ролей memberRoleId == null.
+     * Страница идентификаторов участников организации, отсортированная по возрастанию id.
+     * continuationToken == null — первая страница, иначе участники строго после указанного id.
+     */
+    @NativeQuery("SELECT m.id " +
+            " FROM org_manager.member_to_organization mto " +
+            "     JOIN org_manager.member m " +
+            "       ON m.id = mto.member_id " +
+            " WHERE mto.organization_id = ?1 " +
+            "   AND (CAST(?2 AS VARCHAR) IS NULL OR m.id > ?2) " +
+            " ORDER BY m.id ")
+    List<String> getOrgMemberIds(String orgId, String continuationToken, Pageable pageable);
+
+    /**
+     * То же, что {@link #getOrgMemberList(String)}, но джойн ролей внешний и выборка ограничена
+     * заданными участниками: участник без активных ролей в организации тоже попадает в выдачу.
      */
     @NativeQuery("SELECT m.id, " +
             "              m.email, " +
@@ -55,8 +68,9 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String> {
             "      AND mr.active IS TRUE " +
             "      AND mr.organization_id = mto.organization_id " +
             " WHERE mto.organization_id = ?1 " +
+            "   AND m.id IN (?2) " +
             " ORDER BY m.id, mr.id ")
-    List<MemberWithRoleDto> getOrgMemberListWithRoles(String orgId);
+    List<MemberWithRoleDto> getOrgMemberListWithRoles(String orgId, Collection<String> memberIds);
 
     boolean existsById(String id);
 

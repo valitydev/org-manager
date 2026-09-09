@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static dev.vality.orgmanager.service.AdminCommonService.collectionOrEmpty;
+import static dev.vality.orgmanager.service.AdminCommonService.pageLimit;
 
 /**
  * Приглашения в организации в административном контракте.
@@ -47,9 +48,6 @@ import static dev.vality.orgmanager.service.AdminCommonService.collectionOrEmpty
 @Service
 @RequiredArgsConstructor
 public class AdminInvitationService {
-
-    static final int DEFAULT_INVITATION_LIMIT = 20;
-    static final int MAX_INVITATION_LIMIT = 1000;
 
     private final InvitationRepository invitationRepository;
     private final InviteTokenProperties inviteTokenProperties;
@@ -101,7 +99,7 @@ public class AdminInvitationService {
         log.info("List invitations: organizationId={}, request={}", organizationId, request);
         commonService.findOrganization(organizationId);
         ListInvitationsRequest safeRequest = request == null ? new ListInvitationsRequest() : request;
-        int limit = invitationLimit(safeRequest);
+        int limit = pageLimit(safeRequest.getLimit());
 
         InvitationEntity cursor = null;
         if (safeRequest.isSetContinuationToken()) {
@@ -199,13 +197,6 @@ public class AdminInvitationService {
             case accepted -> builder.equal(stored, StoredInvitationStatus.ACCEPTED.getValue());
             case revoked -> builder.equal(stored, StoredInvitationStatus.REVOKED.getValue());
         };
-    }
-
-    private int invitationLimit(ListInvitationsRequest request) {
-        if (!request.isSetLimit() || request.getLimit() <= 0) {
-            return DEFAULT_INVITATION_LIMIT;
-        }
-        return Math.min(request.getLimit(), MAX_INVITATION_LIMIT);
     }
 
     private InvitationEntity findInvitation(String organizationId, String invitationId) throws InvitationNotFound {

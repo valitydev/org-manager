@@ -24,6 +24,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminCommonService {
 
+    public static final int DEFAULT_PAGE_LIMIT = 20;
+    public static final int MAX_PAGE_LIMIT = 1000;
+
     private final OrganizationRepository organizationRepository;
     private final OrganizationRoleRepository organizationRoleRepository;
     private final JsonCodec jsonCodec;
@@ -91,5 +94,12 @@ public class AdminCommonService {
 
     public static <T> Collection<T> collectionOrEmpty(Collection<T> collection) {
         return collection == null ? List.of() : collection;
+    }
+
+    public static int pageLimit(int requested) {
+        if (requested <= 0) {
+            return DEFAULT_PAGE_LIMIT;
+        }
+        return Math.min(requested, MAX_PAGE_LIMIT);
     }
 }

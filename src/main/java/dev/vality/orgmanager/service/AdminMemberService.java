@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 import static dev.vality.orgmanager.service.AdminCommonService.collectionOrEmpty;
+import static dev.vality.orgmanager.service.AdminCommonService.pageLimit;
 
 /**
  * Участники организаций и их роли в административном контракте.
@@ -38,9 +39,6 @@ import static dev.vality.orgmanager.service.AdminCommonService.collectionOrEmpty
 @Service
 @RequiredArgsConstructor
 public class AdminMemberService {
-
-    static final int DEFAULT_MEMBER_LIMIT = 20;
-    static final int MAX_MEMBER_LIMIT = 1000;
 
     private final OrganizationRepository organizationRepository;
     private final MemberRepository memberRepository;
@@ -62,7 +60,7 @@ public class AdminMemberService {
             throw new OrganizationNotFound();
         }
         ListMembersRequest safeRequest = request == null ? new ListMembersRequest() : request;
-        int limit = memberLimit(safeRequest);
+        int limit = pageLimit(safeRequest.getLimit());
         Pageable pageable = PageRequest.ofSize(limit + 1);
         String token = safeRequest.getContinuationToken();
         List<String> memberIds = new ArrayList<>(token == null
@@ -171,13 +169,6 @@ public class AdminMemberService {
         member.setRoles(roles);
         memberRoleRepository.save(role);
         memberRepository.save(member);
-    }
-
-    private int memberLimit(ListMembersRequest request) {
-        if (!request.isSetLimit() || request.getLimit() <= 0) {
-            return DEFAULT_MEMBER_LIMIT;
-        }
-        return Math.min(request.getLimit(), MAX_MEMBER_LIMIT);
     }
 
     private MemberEntity findMember(OrganizationEntity organization, String userId) throws MemberNotFound {

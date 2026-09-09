@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static dev.vality.orgmanager.service.AdminCommonService.collectionOrEmpty;
+import static dev.vality.orgmanager.service.AdminCommonService.pageLimit;
 
 /**
  * Организации и их роли в административном контракте.
@@ -49,9 +50,6 @@ import static dev.vality.orgmanager.service.AdminCommonService.collectionOrEmpty
 @Service
 @RequiredArgsConstructor
 public class AdminOrganizationService {
-
-    static final int DEFAULT_ORGANIZATION_LIMIT = 20;
-    static final int MAX_ORGANIZATION_LIMIT = 1000;
 
     private final OrganizationRepository organizationRepository;
     private final OrganizationRoleRepository organizationRoleRepository;
@@ -104,7 +102,7 @@ public class AdminOrganizationService {
     public ListOrganizationsResult list(ListOrganizationsRequest request) {
         log.info("List organizations: request={}", request);
         ListOrganizationsRequest safeRequest = request == null ? new ListOrganizationsRequest() : request;
-        int limit = organizationLimit(safeRequest);
+        int limit = pageLimit(safeRequest.getLimit());
         Pageable pageable = PageRequest.of(0, limit + 1, Sort.by(Sort.Direction.DESC, "id"));
         List<OrganizationEntity> entities = new ArrayList<>(
                 organizationRepository.findAll(specification(safeRequest), pageable).getContent());
@@ -219,13 +217,6 @@ public class AdminOrganizationService {
             }
             return builder.and(predicates.toArray(new Predicate[0]));
         };
-    }
-
-    private int organizationLimit(ListOrganizationsRequest request) {
-        if (!request.isSetLimit() || request.getLimit() <= 0) {
-            return DEFAULT_ORGANIZATION_LIMIT;
-        }
-        return Math.min(request.getLimit(), MAX_ORGANIZATION_LIMIT);
     }
 
     private Organization changeStatus(

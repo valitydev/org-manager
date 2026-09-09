@@ -61,8 +61,6 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String> {
     /**
      * То же, что {@link #getOrgMemberList(String)}, но джойн ролей внешний и выборка ограничена
      * заданными участниками: участник без активных ролей в организации тоже попадает в выдачу.
-     * Административный контракт умеет добавлять участника без роли (AddMember), и такой участник
-     * не должен пропадать из списка. У строк для участника без ролей memberRoleId == null.
      */
     @NativeQuery("SELECT m.id, " +
             "              m.email, " +

@@ -2,6 +2,7 @@ package dev.vality.orgmanager.repository;
 
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
+import dev.vality.orgmanager.service.dto.UserDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.NativeQuery;
@@ -71,6 +72,17 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String> {
             "   AND m.id IN (?2) " +
             " ORDER BY m.id, mr.id ")
     List<MemberWithRoleDto> getOrgMemberListWithRoles(String orgId, Collection<String> memberIds);
+
+    /**
+     * Страница пользователей по возрастанию id
+     */
+    @NativeQuery("SELECT m.id, " +
+            "              m.email " +
+            " FROM org_manager.member m " +
+            " WHERE (CAST(?1 AS VARCHAR) IS NULL OR m.id > ?1) " +
+            "   AND (CAST(?2 AS VARCHAR) IS NULL OR m.email = ?2) " +
+            " ORDER BY m.id ")
+    List<UserDto> getUserPage(String continuationToken, String email, Pageable pageable);
 
     boolean existsById(String id);
 

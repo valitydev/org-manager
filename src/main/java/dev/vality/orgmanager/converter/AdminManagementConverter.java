@@ -9,6 +9,7 @@ import dev.vality.orgmanagement.OrganizationRole;
 import dev.vality.orgmanagement.OrganizationStatus;
 import dev.vality.orgmanagement.RoleAssignment;
 import dev.vality.orgmanagement.RoleScope;
+import dev.vality.orgmanagement.User;
 import dev.vality.orgmanager.entity.InvitationEntity;
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
@@ -16,6 +17,7 @@ import dev.vality.orgmanager.entity.OrganizationEntity;
 import dev.vality.orgmanager.entity.OrganizationRoleEntity;
 import dev.vality.orgmanager.entity.StoredInvitationStatus;
 import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
+import dev.vality.orgmanager.service.dto.UserDto;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -49,6 +51,22 @@ public class AdminManagementConverter {
         return organization;
     }
 
+    public User toUser(MemberEntity entity) {
+        return toUser(entity.getId(), entity.getEmail());
+    }
+
+    public User toUser(UserDto row) {
+        return toUser(row.getId(), row.getEmail());
+    }
+
+    private User toUser(String id, String email) {
+        User user = new User(id);
+        if (email != null) {
+            user.setEmail(email);
+        }
+        return user;
+    }
+
     public Member toMember(MemberEntity entity, String organizationId) {
         List<MemberRole> roles = collectionOrEmpty(entity.getRoles()).stream()
                 .filter(MemberRoleEntity::isActive)
@@ -56,11 +74,7 @@ public class AdminManagementConverter {
                 .sorted(Comparator.comparing(MemberRoleEntity::getId))
                 .map(this::toMemberRole)
                 .toList();
-        Member member = new Member(entity.getId(), roles);
-        if (entity.getEmail() != null) {
-            member.setEmail(entity.getEmail());
-        }
-        return member;
+        return new Member(toUser(entity), roles);
     }
 
     /**
@@ -70,13 +84,9 @@ public class AdminManagementConverter {
     public List<Member> toMembers(List<MemberWithRoleDto> rows) {
         Map<String, Member> members = new LinkedHashMap<>();
         for (MemberWithRoleDto row : collectionOrEmpty(rows)) {
-            Member member = members.computeIfAbsent(row.getId(), id -> {
-                Member created = new Member(id, new ArrayList<>());
-                if (row.getEmail() != null) {
-                    created.setEmail(row.getEmail());
-                }
-                return created;
-            });
+            Member member = members.computeIfAbsent(
+                    row.getId(),
+                    id -> new Member(toUser(id, row.getEmail()), new ArrayList<>()));
             if (row.getMemberRoleId() != null) {
                 member.getRoles().add(toMemberRole(row));
             }

@@ -16,6 +16,7 @@ import dev.vality.orgmanager.repository.OrganizationRepository;
 import dev.vality.orgmanager.repository.OrganizationRoleRepository;
 import dev.vality.orgmanager.repository.ScopeRepository;
 import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
+import dev.vality.orgmanager.service.dto.UserDto;
 import dev.vality.orgmanager.util.JsonCodec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,6 +85,7 @@ class AdminManagementServiceTest {
                         scopeRepository,
                         converter,
                         commonService),
+                new AdminUserService(memberRepository, converter),
                 new AdminMemberService(
                         organizationRepository,
                         memberRepository,
@@ -286,7 +288,8 @@ class AdminManagementServiceTest {
         var role = service.assignMemberRole("org", "user", new AssignMemberRoleRequest("manager"));
         service.removeMemberRole("org", "user", role.getId());
 
-        assertEquals("user@example.com", member.getEmail());
+        assertEquals("user", member.getUser().getId());
+        assertEquals("user@example.com", member.getUser().getEmail());
         assertTrue(service.getMember("org", "user").getRoles().isEmpty());
     }
 
@@ -306,7 +309,7 @@ class AdminManagementServiceTest {
 
         var member = service.addMember("org", new AddMemberRequest("user", "new@example.com"));
 
-        assertEquals("new@example.com", member.getEmail());
+        assertEquals("new@example.com", member.getUser().getEmail());
         assertEquals(1, organization.getMembers().size());
     }
 
@@ -487,11 +490,11 @@ class AdminManagementServiceTest {
         var result = service.listMembers("org", new ListMembersRequest());
         var members = result.getMembers();
 
-        assertEquals(List.of("user-1", "user-2"), members.stream().map(it -> it.getId()).toList());
+        assertEquals(List.of("user-1", "user-2"), members.stream().map(it -> it.getUser().getId()).toList());
         assertEquals(List.of("manager", "accountant"),
                 members.get(0).getRoles().stream().map(it -> it.getRoleId()).toList());
         assertTrue(members.get(1).getRoles().isEmpty());
-        assertEquals("user-2@example.com", members.get(1).getEmail());
+        assertEquals("user-2@example.com", members.get(1).getUser().getEmail());
         assertFalse(result.isSetContinuationToken());
     }
 
@@ -505,7 +508,7 @@ class AdminManagementServiceTest {
 
         var result = service.listMembers("org", new ListMembersRequest().setLimit(1));
 
-        assertEquals(List.of("user-1"), result.getMembers().stream().map(it -> it.getId()).toList());
+        assertEquals(List.of("user-1"), result.getMembers().stream().map(it -> it.getUser().getId()).toList());
         assertEquals("user-1", result.getContinuationToken());
     }
 
@@ -521,7 +524,7 @@ class AdminManagementServiceTest {
                 "org",
                 new ListMembersRequest().setLimit(1).setContinuationToken("user-1"));
 
-        assertEquals(List.of("user-2"), result.getMembers().stream().map(it -> it.getId()).toList());
+        assertEquals(List.of("user-2"), result.getMembers().stream().map(it -> it.getUser().getId()).toList());
         assertFalse(result.isSetContinuationToken());
     }
 
@@ -542,6 +545,94 @@ class AdminManagementServiceTest {
 
         assertThrows(OrganizationNotFound.class, () -> service.listMembers("org", new ListMembersRequest()));
         verifyNoInteractions(memberRepository);
+    }
+
+    @Test
+    void shouldListUsersWithoutOrganizationContext() throws Exception {
+        when(memberRepository.getUserPage(isNull(), isNull(), any(Pageable.class))).thenReturn(List.of(
+                userRow("user-1", "user-1@example.com"),
+                userRow("user-2", null)));
+
+        var result = service.listUsers(new ListUsersRequest());
+
+        assertEquals(List.of("user-1", "user-2"), result.getUsers().stream().map(User::getId).toList());
+        assertEquals("user-1@example.com", result.getUsers().get(0).getEmail());
+        assertFalse(result.getUsers().get(1).isSetEmail());
+        assertFalse(result.isSetContinuationToken());
+    }
+
+    @Test
+    void shouldPassEmailFilterToQuery() throws Exception {
+        when(memberRepository.getUserPage(isNull(), eq("user-1@example.com"), any(Pageable.class)))
+                .thenReturn(List.of(userRow("user-1", "user-1@example.com")));
+
+        var result = service.listUsers(new ListUsersRequest().setEmail("user-1@example.com"));
+
+        assertEquals(List.of("user-1"), result.getUsers().stream().map(User::getId).toList());
+    }
+
+    @Test
+    void shouldReturnContinuationTokenWhenMoreUsersExist() throws Exception {
+        when(memberRepository.getUserPage(isNull(), isNull(), any(Pageable.class))).thenReturn(List.of(
+                userRow("user-1", "user-1@example.com"),
+                userRow("user-2", "user-2@example.com")));
+
+        var result = service.listUsers(new ListUsersRequest().setLimit(1));
+
+        assertEquals(List.of("user-1"), result.getUsers().stream().map(User::getId).toList());
+        assertEquals("user-1", result.getContinuationToken());
+    }
+
+    @Test
+    void shouldReadNextUsersPageByContinuationToken() throws Exception {
+        when(memberRepository.getUserPage(eq("user-1"), isNull(), any(Pageable.class)))
+                .thenReturn(List.of(userRow("user-2", "user-2@example.com")));
+
+        var result = service.listUsers(new ListUsersRequest().setLimit(1).setContinuationToken("user-1"));
+
+        assertEquals(List.of("user-2"), result.getUsers().stream().map(User::getId).toList());
+        assertFalse(result.isSetContinuationToken());
+    }
+
+    @Test
+    void shouldGetUserById() throws Exception {
+        when(memberRepository.findById("user")).thenReturn(Optional.of(MemberEntity.builder()
+                .id("user")
+                .email("user@example.com")
+                .roles(new HashSet<>())
+                .build()));
+
+        var user = service.getUser("user");
+
+        assertEquals("user", user.getId());
+        assertEquals("user@example.com", user.getEmail());
+    }
+
+    @Test
+    void shouldRejectUnknownUser() {
+        when(memberRepository.findById("user")).thenReturn(Optional.empty());
+
+        assertThrows(UnknownUser.class, () -> service.getUser("user"));
+    }
+
+    @Test
+    void shouldRejectBlankUserIdWithoutQuery() {
+        assertThrows(UnknownUser.class, () -> service.getUser(" "));
+        verifyNoInteractions(memberRepository);
+    }
+
+    private UserDto userRow(String userId, String email) {
+        return new UserDto() {
+            @Override
+            public String getId() {
+                return userId;
+            }
+
+            @Override
+            public String getEmail() {
+                return email;
+            }
+        };
     }
 
     private MemberWithRoleDto memberRow(String memberId, String email, String roleId, String role) {

@@ -11,6 +11,7 @@ import java.util.List;
 public class AdminManagementService implements AdminManagementSrv.Iface {
 
     private final AdminOrganizationService adminOrganizationService;
+    private final AdminUserService adminUserService;
     private final AdminMemberService adminMemberService;
     private final AdminInvitationService adminInvitationService;
 
@@ -51,6 +52,16 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     public Organization activateOrganization(String organizationId)
             throws OrganizationNotFound, InvalidOrganizationState {
         return adminOrganizationService.activate(organizationId);
+    }
+
+    @Override
+    public ListUsersResult listUsers(ListUsersRequest request) {
+        return adminUserService.list(request);
+    }
+
+    @Override
+    public User getUser(String userId) throws UnknownUser {
+        return adminUserService.get(userId);
     }
 
     @Override

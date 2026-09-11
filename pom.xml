@@ -60,7 +60,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>org-management-proto</artifactId>
-            <version>1.21-23aa5d8</version>
+            <version>1.22-4a6c2e7</version>
             <exclusions>
                 <exclusion>
                     <groupId>dev.vality</groupId>

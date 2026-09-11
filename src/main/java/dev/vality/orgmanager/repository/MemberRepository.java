@@ -80,7 +80,7 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String> {
             "              m.email " +
             " FROM org_manager.member m " +
             " WHERE (CAST(?1 AS VARCHAR) IS NULL OR m.id > ?1) " +
-            "   AND (CAST(?2 AS VARCHAR) IS NULL OR m.email = ?2) " +
+            "   AND (CAST(?2 AS VARCHAR) IS NULL OR LOWER(m.email) = LOWER(CAST(?2 AS VARCHAR))) " +
             " ORDER BY m.id ")
     List<UserDto> getUserPage(String continuationToken, String email, Pageable pageable);
 

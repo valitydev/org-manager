@@ -21,10 +21,12 @@ import dev.vality.orgmanager.util.JsonCodec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -35,6 +37,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static dev.vality.orgmanager.service.AdminCommonService.DEFAULT_PAGE_LIMIT;
+import static dev.vality.orgmanager.service.AdminCommonService.MAX_PAGE_LIMIT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -621,6 +625,269 @@ class AdminManagementServiceTest {
         verifyNoInteractions(memberRepository);
     }
 
+
+    @Test
+    void shouldRejectUnknownOrganizationForEveryOrganizationScopedMethod() {
+        when(organizationRepository.findById("gone")).thenReturn(Optional.empty());
+        when(organizationRepository.existsById("gone")).thenReturn(false);
+
+        assertThrows(OrganizationNotFound.class, () -> service.getOrganization("gone"));
+        assertThrows(OrganizationNotFound.class, () -> service.modifyOrganization(
+                "gone",
+                new ModifyOrganizationRequest().setName("renamed")));
+        assertThrows(OrganizationNotFound.class, () -> service.deactivateOrganization("gone"));
+        assertThrows(OrganizationNotFound.class, () -> service.activateOrganization("gone"));
+        assertThrows(OrganizationNotFound.class, () -> service.getOrganizationRole("gone", "manager"));
+        assertThrows(OrganizationNotFound.class, () -> service.listOrganizationRoles("gone"));
+        assertThrows(OrganizationNotFound.class, () -> service.setOrganizationRole(
+                "gone",
+                new SetOrganizationRoleRequest("manager", "Manager", new ArrayList<>())));
+        assertThrows(OrganizationNotFound.class, () -> service.getMember("gone", "user"));
+        assertThrows(OrganizationNotFound.class, () -> service.listMembers("gone", new ListMembersRequest()));
+        assertThrows(OrganizationNotFound.class, () -> service.addMember(
+                "gone",
+                new AddMemberRequest("user", "user@example.com")));
+        assertThrows(OrganizationNotFound.class, () -> service.removeMember("gone", "user"));
+        assertThrows(OrganizationNotFound.class, () -> service.assignMemberRole(
+                "gone",
+                "user",
+                new AssignMemberRoleRequest("manager")));
+        assertThrows(OrganizationNotFound.class, () -> service.removeMemberRole("gone", "user", "role"));
+        assertThrows(OrganizationNotFound.class, () -> service.createInvitation(
+                "gone",
+                new CreateInvitationRequest("user@example.com", new ArrayList<>())));
+        assertThrows(OrganizationNotFound.class, () -> service.getInvitation("gone", "invitation"));
+        assertThrows(OrganizationNotFound.class,
+                () -> service.listInvitations("gone", new ListInvitationsRequest()));
+        assertThrows(OrganizationNotFound.class, () -> service.revokeInvitation(
+                "gone",
+                "invitation",
+                new RevokeInvitationRequest("obsolete")));
+
+        verifyNoInteractions(memberRepository, memberRoleRepository, invitationRepository, mailMessageSender);
+    }
+
+    @Test
+    void shouldRejectUnknownMemberForEveryMemberScopedMethod() {
+        when(organizationRepository.findById("org"))
+                .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
+
+        assertThrows(MemberNotFound.class, () -> service.getMember("org", "ghost"));
+        assertThrows(MemberNotFound.class, () -> service.removeMember("org", "ghost"));
+        assertThrows(MemberNotFound.class, () -> service.assignMemberRole(
+                "org",
+                "ghost",
+                new AssignMemberRoleRequest("manager")));
+        assertThrows(MemberNotFound.class, () -> service.removeMemberRole("org", "ghost", "role"));
+
+        verifyNoInteractions(memberRepository, memberRoleRepository, organizationRoleRepository);
+    }
+
+    /**
+     * Удаление участника гасит только его роли в этой организации: роли в других
+     * организациях остаются активными, сама запись пользователя не удаляется.
+     */
+    @Test
+    void shouldRemoveMemberAndDeactivateOnlyItsRolesInThisOrganization() throws Exception {
+        MemberRoleEntity here = MemberRoleEntity.builder()
+                .id("role-here")
+                .organizationId("org")
+                .roleId("manager")
+                .active(true)
+                .build();
+        MemberRoleEntity elsewhere = MemberRoleEntity.builder()
+                .id("role-elsewhere")
+                .organizationId("another-org")
+                .roleId("manager")
+                .active(true)
+                .build();
+        MemberEntity member = MemberEntity.builder()
+                .id("user")
+                .email("user@example.com")
+                .roles(new HashSet<>(Set.of(here, elsewhere)))
+                .build();
+        OrganizationEntity organization = organization("org", OrganizationStatus.active);
+        organization.setMembers(new HashSet<>(Set.of(member)));
+        when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
+        when(organizationRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.removeMember("org", "user");
+
+        assertFalse(here.isActive());
+        assertTrue(elsewhere.isActive());
+        assertEquals(Set.of(elsewhere), member.getRoles());
+        assertTrue(organization.getMembers().isEmpty());
+        verify(memberRoleRepository).saveAll(List.of(here));
+        assertThrows(MemberNotFound.class, () -> service.getMember("org", "user"));
+    }
+
+    @Test
+    void shouldGetInvitationWithinItsOrganization() throws Exception {
+        InvitationEntity pending = invitation("pending", LocalDateTime.now().plusDays(1));
+        when(organizationRepository.findById("org"))
+                .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
+        when(invitationRepository.findByIdAndOrganizationId("pending", "org")).thenReturn(Optional.of(pending));
+
+        var result = service.getInvitation("org", "pending");
+
+        assertEquals("pending", result.getId());
+        assertEquals("org", result.getOrganizationId());
+        assertEquals("user@example.com", result.getEmail());
+        assertEquals(InvitationStatus.pending, result.getStatus());
+        assertFalse(result.isSetMetadata());
+    }
+
+    @Test
+    void shouldRejectInvitationThatBelongsToAnotherOrganization() {
+        when(organizationRepository.findById("org"))
+                .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
+        when(invitationRepository.findByIdAndOrganizationId("alien", "org")).thenReturn(Optional.empty());
+
+        assertThrows(InvitationNotFound.class, () -> service.getInvitation("org", "alien"));
+    }
+
+    /** Просрочка считается по expires_at, не дожидаясь фоновой задачи. */
+    @Test
+    void shouldReportPendingInvitationAsExpiredBeforeSchedulerSweepsIt() throws Exception {
+        InvitationEntity stale = invitation("stale", LocalDateTime.now().minusMinutes(1));
+        when(organizationRepository.findById("org"))
+                .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
+        when(invitationRepository.findByIdAndOrganizationId("stale", "org")).thenReturn(Optional.of(stale));
+
+        assertEquals(InvitationStatus.expired, service.getInvitation("org", "stale").getStatus());
+    }
+
+    @Test
+    void shouldRejectRevokingInvitationThatIsNotPending() {
+        InvitationEntity revoked = invitation("revoked", LocalDateTime.now().plusDays(1), "Revoked");
+        InvitationEntity accepted = invitation("accepted", LocalDateTime.now().plusDays(1), "Accepted");
+        when(organizationRepository.findById("org"))
+                .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
+        when(invitationRepository.findByIdAndOrganizationId("revoked", "org")).thenReturn(Optional.of(revoked));
+        when(invitationRepository.findByIdAndOrganizationId("accepted", "org")).thenReturn(Optional.of(accepted));
+
+        assertThrows(InvalidInvitationState.class,
+                () -> service.revokeInvitation("org", "revoked", new RevokeInvitationRequest("obsolete")));
+        assertThrows(InvalidInvitationState.class,
+                () -> service.revokeInvitation("org", "accepted", new RevokeInvitationRequest("obsolete")));
+        verify(invitationRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldRejectInvitationWithMetadataThatRestWouldFailToRead() {
+        when(organizationRepository.findById("org"))
+                .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
+
+        assertThrows(InvalidRequest.class, () -> service.createInvitation(
+                "org",
+                new CreateInvitationRequest("user@example.com", new ArrayList<>()).setMetadata("[1,2]")));
+        verifyNoInteractions(mailMessageSender, invitationRepository);
+    }
+
+    @Test
+    void shouldKeepScopeResourceIdOnAssignedRole() throws Exception {
+        OrganizationEntity organization = organization("org", OrganizationStatus.active);
+        organization.setMembers(new HashSet<>(Set.of(MemberEntity.builder()
+                .id("user")
+                .roles(new HashSet<>())
+                .build())));
+        when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
+        when(organizationRoleRepository.findByOrganizationIdAndRoleId("org", "manager"))
+                .thenReturn(Optional.of(role("manager", "Manager", "Shop")));
+        when(memberRoleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var assigned = service.assignMemberRole(
+                "org",
+                "user",
+                new AssignMemberRoleRequest("manager").setScope(new RoleScope("Shop").setResourceId("shop-1")));
+
+        assertEquals("manager", assigned.getRoleId());
+        assertEquals("Shop", assigned.getScope().getScopeId());
+        assertEquals("shop-1", assigned.getScope().getResourceId());
+    }
+
+    @Test
+    void shouldRejectBlankIdentifiersInRoleAssignment() {
+        OrganizationEntity organization = organization("org", OrganizationStatus.active);
+        organization.setMembers(new HashSet<>(Set.of(MemberEntity.builder()
+                .id("user")
+                .roles(new HashSet<>())
+                .build())));
+        when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
+        when(organizationRoleRepository.findByOrganizationIdAndRoleId("org", "manager"))
+                .thenReturn(Optional.of(role("manager", "Manager", "Shop")));
+
+        assertThrows(InvalidRequest.class,
+                () -> service.assignMemberRole("org", "user", new AssignMemberRoleRequest(" ")));
+        assertThrows(InvalidRequest.class, () -> service.assignMemberRole(
+                "org",
+                "user",
+                new AssignMemberRoleRequest("manager").setScope(new RoleScope(" "))));
+        verifyNoInteractions(memberRoleRepository);
+    }
+
+    @Test
+    void shouldRejectMemberWithBlankUserId() {
+        assertThrows(InvalidRequest.class,
+                () -> service.addMember("org", new AddMemberRequest(" ", "user@example.com")));
+        verifyNoInteractions(organizationRepository, memberRepository);
+    }
+
+    @Test
+    void shouldListOrganizationRolesSortedByRoleId() throws Exception {
+        OrganizationEntity organization = organization("org", OrganizationStatus.active);
+        organization.setRoles(new HashSet<>(Set.of(
+                role("manager", "Manager", "Shop"),
+                role("accountant", "Accountant"))));
+        when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
+
+        var roles = service.listOrganizationRoles("org");
+
+        assertEquals(List.of("accountant", "manager"), roles.stream().map(OrganizationRole::getId).toList());
+        assertTrue(roles.get(0).getScopeIds().isEmpty());
+        assertEquals(List.of("Shop"), roles.get(1).getScopeIds());
+    }
+
+    @Test
+    void shouldRejectActivatingAlreadyActiveOrganization() {
+        when(organizationRepository.findById("org"))
+                .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
+
+        assertThrows(InvalidOrganizationState.class, () -> service.activateOrganization("org"));
+        verify(organizationRepository, never()).save(any());
+    }
+
+    /**
+     * Размер страницы доходит до запроса с ограничением сверху и с лишней строкой,
+     * по которой считается continuation token.
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldCapRequestedPageSizeAndAlwaysAskForOneExtraRow() throws Exception {
+        final ArgumentCaptor<Pageable> users = ArgumentCaptor.forClass(Pageable.class);
+        final ArgumentCaptor<Pageable> members = ArgumentCaptor.forClass(Pageable.class);
+        final ArgumentCaptor<Pageable> organizations = ArgumentCaptor.forClass(Pageable.class);
+        when(memberRepository.getUserPage(isNull(), isNull(), any(Pageable.class))).thenReturn(List.of());
+        when(organizationRepository.existsById("org")).thenReturn(true);
+        when(memberRepository.getOrgMemberIds(eq("org"), isNull(), any(Pageable.class))).thenReturn(List.of());
+        when(organizationRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        service.listUsers(new ListUsersRequest().setLimit(MAX_PAGE_LIMIT + 100));
+        service.listMembers("org", new ListMembersRequest());
+        service.listOrganizations(new ListOrganizationsRequest().setLimit(-5));
+
+        verify(memberRepository).getUserPage(isNull(), isNull(), users.capture());
+        verify(memberRepository).getOrgMemberIds(eq("org"), isNull(), members.capture());
+        verify(organizationRepository).findAll(any(Specification.class), organizations.capture());
+        assertEquals(MAX_PAGE_LIMIT + 1, users.getValue().getPageSize());
+        assertEquals(DEFAULT_PAGE_LIMIT + 1, members.getValue().getPageSize());
+        assertEquals(DEFAULT_PAGE_LIMIT + 1, organizations.getValue().getPageSize());
+        assertEquals(Sort.by(Sort.Direction.DESC, "id"), organizations.getValue().getSort());
+    }
+
     private UserDto userRow(String userId, String email) {
         return new UserDto() {
             @Override
@@ -702,6 +969,10 @@ class AdminManagementServiceTest {
     }
 
     private InvitationEntity invitation(String id, LocalDateTime expiresAt) {
+        return invitation(id, expiresAt, "Pending");
+    }
+
+    private InvitationEntity invitation(String id, LocalDateTime expiresAt, String status) {
         return InvitationEntity.builder()
                 .id(id)
                 .organizationId("org")
@@ -709,7 +980,7 @@ class AdminManagementServiceTest {
                 .expiresAt(expiresAt)
                 .inviteeContactEmail("user@example.com")
                 .inviteeRoles(new HashSet<>())
-                .status("Pending")
+                .status(status)
                 .build();
     }
 }

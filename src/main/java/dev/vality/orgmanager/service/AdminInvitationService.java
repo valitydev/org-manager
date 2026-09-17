@@ -67,7 +67,7 @@ public class AdminInvitationService {
         String metadata = commonService.toStoredMetadata(request.getMetadata());
         Set<MemberRoleEntity> roles = new LinkedHashSet<>();
         for (RoleAssignment role : collectionOrEmpty(request.getRoles())) {
-            commonService.validateRoleAssignment(organizationId, role.getRoleId(), role.getScope());
+            commonService.validateRoleAssignment(role.getRoleId(), role.getScope());
             roles.add(commonService.toMemberRoleEntity(organizationId, role.getRoleId(), role.getScope()));
         }
         LocalDateTime now = LocalDateTime.now();

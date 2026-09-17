@@ -15,26 +15,26 @@ public interface OrganizationRepository
         extends JpaRepository<OrganizationEntity, String>, JpaSpecificationExecutor<OrganizationEntity> {
 
     @NativeQuery(" SELECT * FROM org_manager.organization AS o " +
-                    " WHERE o.id IN " +
-                    " ( " +
-                    "  SELECT mo.organization_id FROM org_manager.member_to_organization AS mo " +
-                    "   WHERE mo.member_id = ?1 " +
-                    "   UNION " +
-                    "  SELECT id FROM org_manager.organization WHERE owner = ?1 " +
-                    " ) " +
-                    " ORDER BY o.id DESC")
+            " WHERE o.id IN " +
+            " ( " +
+            "  SELECT mo.organization_id FROM org_manager.member_to_organization AS mo " +
+            "   WHERE mo.member_id = ?1 " +
+            "   UNION " +
+            "  SELECT id FROM org_manager.organization WHERE owner = ?1 " +
+            " ) " +
+            " ORDER BY o.id DESC")
     List<OrganizationEntity> findAllByMember(String userId);
 
     @NativeQuery(" SELECT * FROM org_manager.organization AS o " +
-                    " WHERE o.id IN " +
-                    "  ( " +
-                    "    SELECT mo.organization_id FROM org_manager.member_to_organization AS mo " +
-                    "     WHERE mo.member_id = ?1 " +
-                    "      UNION " +
-                    "    SELECT id FROM org_manager.organization WHERE owner = ?1 " +
-                    "   ) " +
-                    " AND o.id < ?2 " +
-                    " ORDER BY o.id DESC")
+            " WHERE o.id IN " +
+            "  ( " +
+            "    SELECT mo.organization_id FROM org_manager.member_to_organization AS mo " +
+            "     WHERE mo.member_id = ?1 " +
+            "      UNION " +
+            "    SELECT id FROM org_manager.organization WHERE owner = ?1 " +
+            "   ) " +
+            " AND o.id < ?2 " +
+            " ORDER BY o.id DESC")
     List<OrganizationEntity> findAllByMember(String userId, String continuationId);
 
     Set<OrganizationEntity> findAllByOwner(String owner);
@@ -42,5 +42,17 @@ public interface OrganizationRepository
     boolean existsByParty(String party);
 
     Optional<OrganizationEntity> findByParty(String party);
+
+    /**
+     * Блокирует party до конца транзакции: строки для блокировки ещё нет.
+     */
+    @NativeQuery("SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtext(?1))) AS locked")
+    Integer lockByParty(String party);
+
+    /**
+     * Блокирует строку организации до конца транзакции.
+     */
+    @NativeQuery("SELECT id FROM org_manager.organization WHERE id = ?1 FOR UPDATE")
+    Optional<String> lockById(String organizationId);
 
 }

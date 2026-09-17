@@ -29,6 +29,11 @@ public class AdminCommonService {
                 .orElseThrow(OrganizationNotFound::new);
     }
 
+    public OrganizationEntity lockOrganization(String organizationId) throws OrganizationNotFound {
+        organizationRepository.lockById(organizationId).orElseThrow(OrganizationNotFound::new);
+        return findOrganization(organizationId);
+    }
+
     public String toStoredMetadata(String metadata) throws InvalidRequest {
         if (metadata == null) {
             return null;

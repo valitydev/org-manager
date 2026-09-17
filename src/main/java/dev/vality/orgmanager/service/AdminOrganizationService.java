@@ -17,7 +17,6 @@ import dev.vality.orgmanager.service.dto.AdminPage;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -49,11 +48,12 @@ public class AdminOrganizationService {
     @Transactional
     public Organization create(CreateOrganizationRequest request) throws PartyAlreadyBound, InvalidRequest {
         log.info("Create organization: partyId={}, ownerId={}", request.getPartyId(), request.getOwnerId());
-        commonService.requireText(request.getPartyId(), "Party id");
+        String partyId = commonService.requireText(request.getPartyId(), "Party id");
         commonService.requireText(request.getOwnerId(), "Owner id");
         String name = commonService.requireText(request.getName(), "Organization name");
         String metadata = commonService.toStoredMetadata(request.getMetadata());
-        if (organizationRepository.existsByParty(request.getPartyId())) {
+        organizationRepository.lockByParty(partyId);
+        if (organizationRepository.existsByParty(partyId)) {
             throw new PartyAlreadyBound();
         }
         OrganizationEntity entity = OrganizationEntity.builder()
@@ -67,11 +67,7 @@ public class AdminOrganizationService {
                 .members(new HashSet<>())
                 .roles(new HashSet<>())
                 .build();
-        try {
-            return converter.toOrganization(organizationRepository.saveAndFlush(entity));
-        } catch (DataIntegrityViolationException exception) {
-            throw new PartyAlreadyBound();
-        }
+        return converter.toOrganization(organizationRepository.saveAndFlush(entity));
     }
 
     @Transactional(readOnly = true)
@@ -108,7 +104,7 @@ public class AdminOrganizationService {
             throws OrganizationNotFound, InvalidRequest {
         log.info("Modify organization: organizationId={}, request={}", organizationId, request);
         ModifyOrganizationRequest safeRequest = request == null ? new ModifyOrganizationRequest() : request;
-        OrganizationEntity organization = commonService.findOrganization(organizationId);
+        OrganizationEntity organization = commonService.lockOrganization(organizationId);
         if (safeRequest.isSetName()) {
             organization.setName(commonService.requireText(safeRequest.getName(), "Organization name"));
         }
@@ -150,7 +146,7 @@ public class AdminOrganizationService {
             String organizationId,
             StoredOrganizationStatus expected,
             StoredOrganizationStatus target) throws OrganizationNotFound, InvalidOrganizationState {
-        OrganizationEntity organization = commonService.findOrganization(organizationId);
+        OrganizationEntity organization = commonService.lockOrganization(organizationId);
         String current = organization.getStatus();
         if (!expected.matches(current)) {
             throw new InvalidOrganizationState(

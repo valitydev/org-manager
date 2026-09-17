@@ -133,7 +133,7 @@ public class AdminMemberService {
                 organizationId, userId, request.getRoleId());
         OrganizationEntity organization = commonService.findOrganization(organizationId);
         MemberEntity member = findMember(organization, userId);
-        commonService.validateRoleAssignment(organizationId, request.getRoleId(), request.getScope());
+        commonService.validateRoleAssignment(request.getRoleId(), request.getScope());
         MemberRoleEntity role = commonService.toMemberRoleEntity(
                 organizationId, request.getRoleId(), request.getScope());
         role = memberRoleRepository.save(role);

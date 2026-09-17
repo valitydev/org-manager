@@ -5,20 +5,14 @@ import dev.vality.orgmanagement.OrganizationNotFound;
 import dev.vality.orgmanagement.RoleScope;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
-import dev.vality.orgmanager.entity.OrganizationRoleEntity;
-import dev.vality.orgmanager.entity.ScopeEntity;
 import dev.vality.orgmanager.repository.OrganizationRepository;
-import dev.vality.orgmanager.repository.OrganizationRoleRepository;
 import dev.vality.orgmanager.util.JsonCodec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +22,6 @@ public class AdminCommonService {
     public static final int MAX_PAGE_LIMIT = 1000;
 
     private final OrganizationRepository organizationRepository;
-    private final OrganizationRoleRepository organizationRoleRepository;
     private final JsonCodec jsonCodec;
 
     public OrganizationEntity findOrganization(String organizationId) throws OrganizationNotFound {
@@ -55,30 +48,14 @@ public class AdminCommonService {
     }
 
     /**
-     * Проверяет, что назначение роли опирается на каталог ролей организации: сама роль в нём есть,
-     * а указанный scope_id входит в её список допустимых областей действия.
+     * Область действия без resource_id не ограничивает роль, поэтому такое назначение отклоняется.
      */
-    public void validateRoleAssignment(String organizationId, String roleId, RoleScope scope)
-            throws InvalidRequest {
+    public void validateRoleAssignment(String roleId, RoleScope scope) throws InvalidRequest {
         requireText(roleId, "Role id");
-        OrganizationRoleEntity role = organizationRoleRepository
-                .findByOrganizationIdAndRoleId(organizationId, roleId)
-                .orElseThrow(() -> new InvalidRequest(
-                        "Role " + roleId + " is not present in the organization role catalog"));
-        if (scope == null) {
-            return;
+        if (scope != null) {
+            requireText(scope.getScopeId(), "Scope id");
+            requireText(scope.getResourceId(), "Scope resource id");
         }
-        String scopeId = requireText(scope.getScopeId(), "Scope id");
-        if (!allowedScopeIds(role).contains(scopeId)) {
-            throw new InvalidRequest("Scope " + scopeId + " is not allowed for role " + roleId);
-        }
-    }
-
-    public Set<String> allowedScopeIds(OrganizationRoleEntity role) {
-        return collectionOrEmpty(role.getPossibleScopes()).stream()
-                .map(ScopeEntity::getId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
     }
 
     public MemberRoleEntity toMemberRoleEntity(String organizationId, String roleId, RoleScope scope) {

@@ -48,10 +48,17 @@ public abstract class AbstractRepositoryTest {
         invitationRepository.deleteAll();
         memberContextRepository.deleteAll();
         organizationRoleRepository.deleteAll();
-        organizationRepository.deleteAll();
+        // Связи с каскадом PERSIST иначе отменяют удаление при flush
+        var organizations = organizationRepository.findAll();
+        organizations.forEach(it -> it.getMembers().clear());
+        organizationRepository.saveAll(organizations);
         var members = memberRepository.findAll();
-        members.forEach(it -> it.getRoles().clear());
+        members.forEach(it -> {
+            it.getRoles().clear();
+            it.getOrganizations().clear();
+        });
         memberRepository.saveAll(members);
+        organizationRepository.deleteAll();
         memberRepository.deleteAll();
         memberRoleRepository.deleteAll();
     }

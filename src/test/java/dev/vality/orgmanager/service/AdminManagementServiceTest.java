@@ -7,14 +7,10 @@ import dev.vality.orgmanager.entity.InvitationEntity;
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
-import dev.vality.orgmanager.entity.OrganizationRoleEntity;
-import dev.vality.orgmanager.entity.ScopeEntity;
 import dev.vality.orgmanager.repository.InvitationRepository;
 import dev.vality.orgmanager.repository.MemberRepository;
 import dev.vality.orgmanager.repository.MemberRoleRepository;
 import dev.vality.orgmanager.repository.OrganizationRepository;
-import dev.vality.orgmanager.repository.OrganizationRoleRepository;
-import dev.vality.orgmanager.repository.ScopeRepository;
 import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
 import dev.vality.orgmanager.service.dto.UserDto;
 import dev.vality.orgmanager.util.JsonCodec;
@@ -63,10 +59,6 @@ class AdminManagementServiceTest {
     @Mock
     private MemberRoleRepository memberRoleRepository;
     @Mock
-    private OrganizationRoleRepository organizationRoleRepository;
-    @Mock
-    private ScopeRepository scopeRepository;
-    @Mock
     private InvitationRepository invitationRepository;
     @Mock
     private InviteTokenProperties inviteTokenProperties;
@@ -80,13 +72,10 @@ class AdminManagementServiceTest {
         AdminManagementConverter converter = new AdminManagementConverter();
         AdminCommonService commonService = new AdminCommonService(
                 organizationRepository,
-                organizationRoleRepository,
                 new JsonCodec(JsonMapper.builder().build()));
         service = new AdminManagementService(
                 new AdminOrganizationService(
                         organizationRepository,
-                        organizationRoleRepository,
-                        scopeRepository,
                         converter,
                         commonService),
                 new AdminUserService(memberRepository, converter),
@@ -230,63 +219,12 @@ class AdminManagementServiceTest {
     }
 
     @Test
-    void shouldRejectUnknownRoleWithRoleNotFound() {
-        when(organizationRepository.findById("org"))
-                .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
-        when(organizationRoleRepository.findByOrganizationIdAndRoleId("org", "manager"))
-                .thenReturn(Optional.empty());
-
-        assertThrows(RoleNotFound.class, () -> service.getOrganizationRole("org", "manager"));
-    }
-
-    @Test
-    void shouldCreateRoleInCatalogAndThenUpdateIt() throws Exception {
-        when(organizationRepository.findById("org"))
-                .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
-        when(organizationRoleRepository.findByOrganizationIdAndRoleId("org", "manager"))
-                .thenReturn(Optional.empty());
-        when(organizationRoleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(scopeRepository.findById("Shop")).thenReturn(Optional.empty());
-        when(scopeRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        var created = service.setOrganizationRole(
-                "org",
-                new SetOrganizationRoleRequest("manager", "Manager", List.of("Shop")));
-
-        assertEquals("manager", created.getId());
-        assertEquals("Manager", created.getName());
-        assertEquals(List.of("Shop"), created.getScopeIds());
-
-        when(organizationRoleRepository.findByOrganizationIdAndRoleId("org", "manager"))
-                .thenReturn(Optional.of(role("manager", "Manager", "Shop")));
-
-        var updated = service.setOrganizationRole(
-                "org",
-                new SetOrganizationRoleRequest("manager", "Shop manager", new ArrayList<>()));
-
-        assertEquals("Shop manager", updated.getName());
-        assertTrue(updated.getScopeIds().isEmpty());
-    }
-
-    @Test
-    void shouldRejectRoleWithBlankName() {
-        when(organizationRepository.findById("org"))
-                .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
-
-        assertThrows(InvalidRequest.class, () -> service.setOrganizationRole(
-                "org",
-                new SetOrganizationRoleRequest("manager", " ", List.of())));
-    }
-
-    @Test
     void shouldAddMemberAndManageRoleWithoutLastRoleRestriction() throws Exception {
         OrganizationEntity organization = organization("org", OrganizationStatus.active);
         when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
         when(organizationRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(memberRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(memberRoleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(organizationRoleRepository.findByOrganizationIdAndRoleId("org", "manager"))
-                .thenReturn(Optional.of(role("manager", "Manager")));
 
         var member = service.addMember("org", new AddMemberRequest("user", "user@example.com"));
         var role = service.assignMemberRole("org", "user", new AssignMemberRoleRequest("manager"));
@@ -325,37 +263,24 @@ class AdminManagementServiceTest {
     }
 
     @Test
-    void shouldRejectRoleThatIsMissingFromCatalog() {
+    void shouldAssignArbitraryRoleAndScope() throws Exception {
         OrganizationEntity organization = organization("org", OrganizationStatus.active);
         organization.setMembers(new HashSet<>(Set.of(MemberEntity.builder()
                 .id("user")
                 .roles(new HashSet<>())
                 .build())));
         when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
-        when(organizationRoleRepository.findByOrganizationIdAndRoleId("org", "manager"))
-                .thenReturn(Optional.empty());
+        when(memberRoleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThrows(InvalidRequest.class,
-                () -> service.assignMemberRole("org", "user", new AssignMemberRoleRequest("manager")));
-        verifyNoInteractions(memberRoleRepository);
-    }
-
-    @Test
-    void shouldRejectScopeThatRoleDoesNotAllow() {
-        OrganizationEntity organization = organization("org", OrganizationStatus.active);
-        organization.setMembers(new HashSet<>(Set.of(MemberEntity.builder()
-                .id("user")
-                .roles(new HashSet<>())
-                .build())));
-        when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
-        when(organizationRoleRepository.findByOrganizationIdAndRoleId("org", "manager"))
-                .thenReturn(Optional.of(role("manager", "Manager", "Shop")));
-
-        assertThrows(InvalidRequest.class, () -> service.assignMemberRole(
+        var assigned = service.assignMemberRole(
                 "org",
                 "user",
-                new AssignMemberRoleRequest("manager").setScope(new RoleScope("Wallet"))));
-        verifyNoInteractions(memberRoleRepository);
+                new AssignMemberRoleRequest("CustomRole").setScope(new RoleScope("Wallet").setResourceId("w-1")));
+
+        assertEquals("CustomRole", assigned.getRoleId());
+        assertEquals("Wallet", assigned.getScope().getScopeId());
+        assertEquals("w-1", assigned.getScope().getResourceId());
     }
 
     @Test
@@ -458,17 +383,32 @@ class AdminManagementServiceTest {
     }
 
     @Test
-    void shouldRejectInvitationWithRoleOutsideCatalog() {
+    void shouldCreateInvitationWithScopedRole() throws Exception {
         when(organizationRepository.findById("org"))
                 .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
-        when(organizationRoleRepository.findByOrganizationIdAndRoleId("org", "manager"))
-                .thenReturn(Optional.empty());
+        when(inviteTokenProperties.getLifeTimeInDays()).thenReturn(7L);
+        when(invitationRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         CreateInvitationRequest request = new CreateInvitationRequest(
                 "user@example.com",
-                List.of(new RoleAssignment("manager")));
+                List.of(new RoleAssignment("Manager").setScope(new RoleScope("Shop").setResourceId("shop-1"))));
+
+        var result = service.createInvitation("org", request);
+
+        assertEquals(1, result.getRoles().size());
+        assertEquals("Manager", result.getRoles().get(0).getRoleId());
+        assertEquals("shop-1", result.getRoles().get(0).getScope().getResourceId());
+    }
+
+    @Test
+    void shouldRejectInvitationWithBlankRole() {
+        when(organizationRepository.findById("org"))
+                .thenReturn(Optional.of(organization("org", OrganizationStatus.active)));
+        CreateInvitationRequest request = new CreateInvitationRequest(
+                "user@example.com",
+                List.of(new RoleAssignment(" ")));
 
         assertThrows(InvalidRequest.class, () -> service.createInvitation("org", request));
-        verifyNoInteractions(mailMessageSender);
+        verifyNoInteractions(mailMessageSender, invitationRepository);
     }
 
     @Test
@@ -625,7 +565,6 @@ class AdminManagementServiceTest {
         verifyNoInteractions(memberRepository);
     }
 
-
     @Test
     void shouldRejectUnknownOrganizationForEveryOrganizationScopedMethod() {
         when(organizationRepository.findById("gone")).thenReturn(Optional.empty());
@@ -637,11 +576,6 @@ class AdminManagementServiceTest {
                 new ModifyOrganizationRequest().setName("renamed")));
         assertThrows(OrganizationNotFound.class, () -> service.deactivateOrganization("gone"));
         assertThrows(OrganizationNotFound.class, () -> service.activateOrganization("gone"));
-        assertThrows(OrganizationNotFound.class, () -> service.getOrganizationRole("gone", "manager"));
-        assertThrows(OrganizationNotFound.class, () -> service.listOrganizationRoles("gone"));
-        assertThrows(OrganizationNotFound.class, () -> service.setOrganizationRole(
-                "gone",
-                new SetOrganizationRoleRequest("manager", "Manager", new ArrayList<>())));
         assertThrows(OrganizationNotFound.class, () -> service.getMember("gone", "user"));
         assertThrows(OrganizationNotFound.class, () -> service.listMembers("gone", new ListMembersRequest()));
         assertThrows(OrganizationNotFound.class, () -> service.addMember(
@@ -680,7 +614,7 @@ class AdminManagementServiceTest {
                 new AssignMemberRoleRequest("manager")));
         assertThrows(MemberNotFound.class, () -> service.removeMemberRole("org", "ghost", "role"));
 
-        verifyNoInteractions(memberRepository, memberRoleRepository, organizationRoleRepository);
+        verifyNoInteractions(memberRepository, memberRoleRepository);
     }
 
     /**
@@ -747,7 +681,9 @@ class AdminManagementServiceTest {
         assertThrows(InvitationNotFound.class, () -> service.getInvitation("org", "alien"));
     }
 
-    /** Просрочка считается по expires_at, не дожидаясь фоновой задачи. */
+    /**
+     * Просрочка считается по expires_at, не дожидаясь фоновой задачи.
+     */
     @Test
     void shouldReportPendingInvitationAsExpiredBeforeSchedulerSweepsIt() throws Exception {
         InvitationEntity stale = invitation("stale", LocalDateTime.now().minusMinutes(1));
@@ -793,8 +729,6 @@ class AdminManagementServiceTest {
                 .roles(new HashSet<>())
                 .build())));
         when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
-        when(organizationRoleRepository.findByOrganizationIdAndRoleId("org", "manager"))
-                .thenReturn(Optional.of(role("manager", "Manager", "Shop")));
         when(memberRoleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(memberRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -816,15 +750,17 @@ class AdminManagementServiceTest {
                 .roles(new HashSet<>())
                 .build())));
         when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
-        when(organizationRoleRepository.findByOrganizationIdAndRoleId("org", "manager"))
-                .thenReturn(Optional.of(role("manager", "Manager", "Shop")));
 
         assertThrows(InvalidRequest.class,
                 () -> service.assignMemberRole("org", "user", new AssignMemberRoleRequest(" ")));
         assertThrows(InvalidRequest.class, () -> service.assignMemberRole(
                 "org",
                 "user",
-                new AssignMemberRoleRequest("manager").setScope(new RoleScope(" "))));
+                new AssignMemberRoleRequest("manager").setScope(new RoleScope(" ").setResourceId("shop-1"))));
+        assertThrows(InvalidRequest.class, () -> service.assignMemberRole(
+                "org",
+                "user",
+                new AssignMemberRoleRequest("manager").setScope(new RoleScope("Shop"))));
         verifyNoInteractions(memberRoleRepository);
     }
 
@@ -833,21 +769,6 @@ class AdminManagementServiceTest {
         assertThrows(InvalidRequest.class,
                 () -> service.addMember("org", new AddMemberRequest(" ", "user@example.com")));
         verifyNoInteractions(organizationRepository, memberRepository);
-    }
-
-    @Test
-    void shouldListOrganizationRolesSortedByRoleId() throws Exception {
-        OrganizationEntity organization = organization("org", OrganizationStatus.active);
-        organization.setRoles(new HashSet<>(Set.of(
-                role("manager", "Manager", "Shop"),
-                role("accountant", "Accountant"))));
-        when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
-
-        var roles = service.listOrganizationRoles("org");
-
-        assertEquals(List.of("accountant", "manager"), roles.stream().map(OrganizationRole::getId).toList());
-        assertTrue(roles.get(0).getScopeIds().isEmpty());
-        assertEquals(List.of("Shop"), roles.get(1).getScopeIds());
     }
 
     @Test
@@ -939,20 +860,6 @@ class AdminManagementServiceTest {
                 return null;
             }
         };
-    }
-
-    private OrganizationRoleEntity role(String roleId, String name, String... scopeIds) {
-        Set<ScopeEntity> scopes = new HashSet<>();
-        for (String scopeId : scopeIds) {
-            scopes.add(ScopeEntity.builder().id(scopeId).build());
-        }
-        return OrganizationRoleEntity.builder()
-                .id("catalog-" + roleId)
-                .organizationId("org")
-                .roleId(roleId)
-                .name(name)
-                .possibleScopes(scopes)
-                .build();
     }
 
     private OrganizationEntity organization(String id, OrganizationStatus status) {

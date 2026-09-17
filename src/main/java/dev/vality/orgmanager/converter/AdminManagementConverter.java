@@ -5,7 +5,6 @@ import dev.vality.orgmanagement.InvitationStatus;
 import dev.vality.orgmanagement.Member;
 import dev.vality.orgmanagement.MemberRole;
 import dev.vality.orgmanagement.Organization;
-import dev.vality.orgmanagement.OrganizationRole;
 import dev.vality.orgmanagement.OrganizationStatus;
 import dev.vality.orgmanagement.RoleAssignment;
 import dev.vality.orgmanagement.RoleScope;
@@ -14,7 +13,6 @@ import dev.vality.orgmanager.entity.InvitationEntity;
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
-import dev.vality.orgmanager.entity.OrganizationRoleEntity;
 import dev.vality.orgmanager.entity.StoredInvitationStatus;
 import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
 import dev.vality.orgmanager.service.dto.UserDto;
@@ -29,7 +27,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 
 @Component
 public class AdminManagementConverter {
@@ -156,15 +153,6 @@ public class AdminManagementConverter {
             return InvitationStatus.expired;
         }
         return storedStatus;
-    }
-
-    public OrganizationRole toOrganizationRole(OrganizationRoleEntity entity) {
-        List<String> scopeIds = collectionOrEmpty(entity.getPossibleScopes()).stream()
-                .map(scope -> scope.getId())
-                .filter(Objects::nonNull)
-                .sorted()
-                .toList();
-        return new OrganizationRole(entity.getRoleId(), entity.getName(), scopeIds);
     }
 
     private RoleScope toRoleScope(String scopeId, String resourceId) {

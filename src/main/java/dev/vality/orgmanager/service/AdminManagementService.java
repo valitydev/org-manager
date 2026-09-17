@@ -4,8 +4,6 @@ import dev.vality.orgmanagement.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class AdminManagementService implements AdminManagementSrv.Iface {
@@ -62,23 +60,6 @@ public class AdminManagementService implements AdminManagementSrv.Iface {
     @Override
     public User getUser(String userId) throws UnknownUser {
         return adminUserService.get(userId);
-    }
-
-    @Override
-    public OrganizationRole getOrganizationRole(String organizationId, String roleId)
-            throws OrganizationNotFound, RoleNotFound {
-        return adminOrganizationService.getRole(organizationId, roleId);
-    }
-
-    @Override
-    public List<OrganizationRole> listOrganizationRoles(String organizationId) throws OrganizationNotFound {
-        return adminOrganizationService.listRoles(organizationId);
-    }
-
-    @Override
-    public OrganizationRole setOrganizationRole(String organizationId, SetOrganizationRoleRequest request)
-            throws OrganizationNotFound, InvalidRequest {
-        return adminOrganizationService.setRole(organizationId, request);
     }
 
     @Override

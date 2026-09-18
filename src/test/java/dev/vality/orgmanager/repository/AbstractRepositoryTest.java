@@ -48,7 +48,7 @@ public abstract class AbstractRepositoryTest {
         invitationRepository.deleteAll();
         memberContextRepository.deleteAll();
         organizationRoleRepository.deleteAll();
-        // Связи с каскадом PERSIST иначе отменяют удаление при flush
+        // Без разрыва связей каскад PERSIST отменяет удаление при flush
         var organizations = organizationRepository.findAll();
         organizations.forEach(it -> it.getMembers().clear());
         organizationRepository.saveAll(organizations);

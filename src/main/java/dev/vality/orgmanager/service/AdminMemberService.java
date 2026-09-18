@@ -10,6 +10,7 @@ import dev.vality.orgmanagement.MemberNotFound;
 import dev.vality.orgmanagement.MemberRole;
 import dev.vality.orgmanagement.MemberRoleNotFound;
 import dev.vality.orgmanagement.OrganizationNotFound;
+import dev.vality.orgmanagement.RoleScope;
 import dev.vality.orgmanager.converter.AdminManagementConverter;
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
@@ -24,7 +25,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -82,18 +82,14 @@ public class AdminMemberService {
         log.info("Add member: organizationId={}, userId={}", organizationId, request.getUserId());
         String userId = commonService.requireText(request.getUserId(), "User id");
         String email = commonService.requireText(request.getEmail(), "Email");
-        OrganizationEntity organization = commonService.findOrganization(organizationId);
-        MemberEntity member = memberRepository.findById(userId)
-                .orElseGet(() -> MemberEntity.builder()
-                        .id(userId)
-                        .roles(new HashSet<>())
-                        .organizations(new HashSet<>())
-                        .build());
+        OrganizationEntity organization = commonService.lockOrganization(organizationId);
+        memberRepository.upsert(userId, email);
+        MemberEntity member = memberRepository.findById(userId).orElseThrow();
         member.setEmail(email);
-        member = memberRepository.save(member);
-        Set<MemberEntity> members = new HashSet<>(collectionOrEmpty(organization.getMembers()));
-        members.add(member);
-        organization.setMembers(members);
+        Set<MemberEntity> members = organizationMembers(organization);
+        if (!containsMember(members, userId)) {
+            members.add(member);
+        }
         organizationRepository.save(organization);
         return converter.toMember(member, organizationId);
     }
@@ -101,26 +97,18 @@ public class AdminMemberService {
     @Transactional
     public void remove(String organizationId, String userId) throws OrganizationNotFound, MemberNotFound {
         log.info("Remove member: organizationId={}, userId={}", organizationId, userId);
-        OrganizationEntity organization = commonService.findOrganization(organizationId);
+        OrganizationEntity organization = commonService.lockOrganization(organizationId);
         MemberEntity member = findMember(organization, userId);
 
-        Set<MemberRoleEntity> retainedRoles = new HashSet<>();
-        List<MemberRoleEntity> removedRoles = new ArrayList<>();
-        for (MemberRoleEntity role : collectionOrEmpty(member.getRoles())) {
-            if (organizationId.equals(role.getOrganizationId()) && role.isActive()) {
-                role.setActive(false);
-                removedRoles.add(role);
-            } else {
-                retainedRoles.add(role);
-            }
-        }
-        member.setRoles(retainedRoles);
+        List<MemberRoleEntity> removedRoles = memberRoles(member).stream()
+                .filter(role -> organizationId.equals(role.getOrganizationId()) && role.isActive())
+                .toList();
+        removedRoles.forEach(role -> role.setActive(false));
+        removedRoles.forEach(memberRoles(member)::remove);
         memberRoleRepository.saveAll(removedRoles);
         memberRepository.save(member);
 
-        Set<MemberEntity> members = new HashSet<>(collectionOrEmpty(organization.getMembers()));
-        members.remove(member);
-        organization.setMembers(members);
+        organizationMembers(organization).removeIf(candidate -> candidate.getId().equals(userId));
         organizationRepository.save(organization);
     }
 
@@ -131,15 +119,17 @@ public class AdminMemberService {
             AssignMemberRoleRequest request) throws OrganizationNotFound, MemberNotFound, InvalidRequest {
         log.info("Assign member role: organizationId={}, userId={}, roleId={}",
                 organizationId, userId, request.getRoleId());
-        OrganizationEntity organization = commonService.findOrganization(organizationId);
+        OrganizationEntity organization = commonService.lockOrganization(organizationId);
         MemberEntity member = findMember(organization, userId);
         commonService.validateRoleAssignment(request.getRoleId(), request.getScope());
+        MemberRoleEntity assigned = findAssignedRole(member, organizationId, request);
+        if (assigned != null) {
+            return converter.toMemberRole(assigned);
+        }
         MemberRoleEntity role = commonService.toMemberRoleEntity(
                 organizationId, request.getRoleId(), request.getScope());
         role = memberRoleRepository.save(role);
-        Set<MemberRoleEntity> roles = new HashSet<>(collectionOrEmpty(member.getRoles()));
-        roles.add(role);
-        member.setRoles(roles);
+        memberRoles(member).add(role);
         memberRepository.save(member);
         return converter.toMemberRole(role);
     }
@@ -149,7 +139,7 @@ public class AdminMemberService {
             throws OrganizationNotFound, MemberNotFound, MemberRoleNotFound {
         log.info("Remove member role: organizationId={}, userId={}, memberRoleId={}",
                 organizationId, userId, memberRoleId);
-        OrganizationEntity organization = commonService.findOrganization(organizationId);
+        OrganizationEntity organization = commonService.lockOrganization(organizationId);
         MemberEntity member = findMember(organization, userId);
         MemberRoleEntity role = collectionOrEmpty(member.getRoles()).stream()
                 .filter(candidate -> candidate.getId().equals(memberRoleId))
@@ -158,11 +148,53 @@ public class AdminMemberService {
                 .findFirst()
                 .orElseThrow(MemberRoleNotFound::new);
         role.setActive(false);
-        Set<MemberRoleEntity> roles = new HashSet<>(collectionOrEmpty(member.getRoles()));
-        roles.remove(role);
-        member.setRoles(roles);
+        memberRoles(member).remove(role);
         memberRoleRepository.save(role);
         memberRepository.save(member);
+    }
+
+    /**
+     * Уже назначенная роль с той же областью действия, если она есть.
+     */
+    private MemberRoleEntity findAssignedRole(
+            MemberEntity member,
+            String organizationId,
+            AssignMemberRoleRequest request) {
+        RoleScope scope = request.getScope();
+        return memberRoles(member).stream()
+                .filter(MemberRoleEntity::isActive)
+                .filter(role -> organizationId.equals(role.getOrganizationId()))
+                .filter(role -> role.getRoleId().equals(request.getRoleId()))
+                .filter(role -> scope == null
+                        ? role.getScopeId() == null
+                        : scope.getScopeId().equals(role.getScopeId())
+                        && scope.getResourceId().equals(role.getResourceId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Коллекция меняется на месте: подстановка новой пересоздаёт связующую таблицу целиком.
+     */
+    private Set<MemberRoleEntity> memberRoles(MemberEntity member) {
+        if (member.getRoles() == null) {
+            member.setRoles(new HashSet<>());
+        }
+        return member.getRoles();
+    }
+
+    /**
+     * Поиск по идентификатору: equals участника учитывает email.
+     */
+    private boolean containsMember(Set<MemberEntity> members, String userId) {
+        return members.stream().anyMatch(member -> member.getId().equals(userId));
+    }
+
+    private Set<MemberEntity> organizationMembers(OrganizationEntity organization) {
+        if (organization.getMembers() == null) {
+            organization.setMembers(new HashSet<>());
+        }
+        return organization.getMembers();
     }
 
     private MemberEntity findMember(OrganizationEntity organization, String userId) throws MemberNotFound {

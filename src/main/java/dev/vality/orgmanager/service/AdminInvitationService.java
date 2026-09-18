@@ -62,7 +62,7 @@ public class AdminInvitationService {
     public Invitation create(String organizationId, CreateInvitationRequest request)
             throws OrganizationNotFound, InvalidRequest {
         log.info("Create invitation: organizationId={}, email={}", organizationId, request.getEmail());
-        commonService.findOrganization(organizationId);
+        commonService.lockOrganization(organizationId);
         String email = commonService.requireText(request.getEmail(), "Email");
         String metadata = commonService.toStoredMetadata(request.getMetadata());
         Set<MemberRoleEntity> roles = new LinkedHashSet<>();
@@ -137,7 +137,7 @@ public class AdminInvitationService {
     public void revoke(String organizationId, String invitationId, RevokeInvitationRequest request)
             throws OrganizationNotFound, InvitationNotFound, InvalidInvitationState {
         log.info("Revoke invitation: organizationId={}, invitationId={}", organizationId, invitationId);
-        commonService.findOrganization(organizationId);
+        commonService.lockOrganization(organizationId);
         InvitationEntity invitation = findInvitation(organizationId, invitationId);
         InvitationStatus status = converter.effectiveInvitationStatus(invitation);
         if (status != InvitationStatus.pending) {

@@ -5,6 +5,7 @@ import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
 import dev.vality.orgmanager.service.dto.UserDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +15,14 @@ import java.util.List;
 @Repository
 public interface MemberRepository extends JpaRepository<MemberEntity, String> {
 
+
+    /**
+     * Пользователь общий для всех организаций, поэтому создаётся без конфликта по ключу.
+     */
+    @Modifying(flushAutomatically = true)
+    @NativeQuery("INSERT INTO org_manager.member (id, email) VALUES (?1, ?2) " +
+            " ON CONFLICT (id) DO UPDATE SET email = excluded.email")
+    void upsert(String userId, String email);
 
     @NativeQuery("SELECT m.id, " +
             "              m.email,  " +

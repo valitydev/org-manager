@@ -44,7 +44,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -69,6 +71,14 @@ class AdminManagementServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(organizationRepository.lockById(any()))
+                .thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
+        lenient().when(memberRepository.findById(any())).thenAnswer(invocation -> Optional.of(
+                MemberEntity.builder()
+                        .id(invocation.getArgument(0))
+                        .roles(new HashSet<>())
+                        .organizations(new HashSet<>())
+                        .build()));
         AdminManagementConverter converter = new AdminManagementConverter();
         AdminCommonService commonService = new AdminCommonService(
                 organizationRepository,
@@ -247,7 +257,6 @@ class AdminManagementServiceTest {
         when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
         when(organizationRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(memberRepository.findById("user")).thenReturn(Optional.of(existing));
-        when(memberRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         var member = service.addMember("org", new AddMemberRequest("user", "new@example.com"));
 
@@ -281,6 +290,24 @@ class AdminManagementServiceTest {
         assertEquals("CustomRole", assigned.getRoleId());
         assertEquals("Wallet", assigned.getScope().getScopeId());
         assertEquals("w-1", assigned.getScope().getResourceId());
+    }
+
+    @Test
+    void shouldReturnExistingAssignmentWhenSameRoleIsAssignedTwice() throws Exception {
+        OrganizationEntity organization = organization("org", OrganizationStatus.active);
+        organization.setMembers(new HashSet<>(Set.of(MemberEntity.builder()
+                .id("user")
+                .roles(new HashSet<>())
+                .build())));
+        when(organizationRepository.findById("org")).thenReturn(Optional.of(organization));
+        when(memberRoleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var first = service.assignMemberRole("org", "user", new AssignMemberRoleRequest("Manager"));
+        var second = service.assignMemberRole("org", "user", new AssignMemberRoleRequest("Manager"));
+
+        assertEquals(first.getId(), second.getId());
+        verify(memberRoleRepository, times(1)).save(any());
     }
 
     @Test

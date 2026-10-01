@@ -10,6 +10,7 @@ import dev.vality.orgmanager.service.dto.ResourceDto;
 import dev.vality.orgmanager.util.TestData;
 import dev.vality.swag.organizations.model.InvitationRequest;
 import dev.vality.swag.organizations.model.MemberRole;
+import dev.vality.swag.organizations.model.Organization;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsAnything.anything;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -226,4 +228,42 @@ public class OrgsControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.result", anything()));
     }
 
+
+    @Test
+    void createOrgWithAllowedIps() throws Exception {
+        doNothing().when(resourceAccessService).checkRights();
+        Organization organization = new Organization()
+                .name("Organization")
+                .allowedIps(Set.of(" 1.2.3.4", "10.0.0.1"));
+
+        String orgId = objectMapper.readTree(mockMvc.perform(post("/orgs")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(organization))
+                        .header("Authorization", "Bearer " + generateAdminJwt())
+                        .header("X-Request-ID", "testRequestId"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.allowedIps", containsInAnyOrder("1.2.3.4", "10.0.0.1")))
+                .andReturn().getResponse().getContentAsString()).get("id").asString();
+
+        assertThat(organizationRepository.findById(orgId).orElseThrow().getAllowedIps(),
+                is(Set.of("1.2.3.4", "10.0.0.1")));
+    }
+
+    @Test
+    void createOrgWithInvalidAllowedIps() throws Exception {
+        doNothing().when(resourceAccessService).checkRights();
+        Organization organization = new Organization()
+                .name("Organization")
+                .allowedIps(Set.of("1.2.3.4", "not-an-ip"));
+
+        mockMvc.perform(post("/orgs")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(organization))
+                        .header("Authorization", "Bearer " + generateAdminJwt())
+                        .header("X-Request-ID", "testRequestId"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", equalTo("invalidRequest")));
+
+        assertTrue(organizationRepository.findAll().isEmpty());
+    }
 }

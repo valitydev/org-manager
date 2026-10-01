@@ -11,6 +11,7 @@ import dev.vality.orgmanager.repository.MemberContextRepository;
 import dev.vality.orgmanager.repository.MemberRepository;
 import dev.vality.orgmanager.repository.OrganizationRepository;
 import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
+import dev.vality.orgmanager.util.AllowedIps;
 import dev.vality.swag.organizations.model.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,9 @@ public class OrganizationService {
             Organization organization,
             String idempotencyKey) {
         String keycloakUserId = token.getSubject();
+        Set<String> allowedIps = AllowedIps.normalize(organization.getAllowedIps());
+        AllowedIps.validate(allowedIps);
+        organization.setAllowedIps(allowedIps);
         OrganizationEntity entity = organizationConverter.toEntity(organization, keycloakUserId);
         OrganizationEntity savedEntity = organizationRepository.save(entity);
         return organizationConverter.toDomain(savedEntity);

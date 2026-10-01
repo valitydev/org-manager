@@ -3,6 +3,8 @@ package dev.vality.orgmanager.entity;
 import lombok.*;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
@@ -44,4 +46,17 @@ public class OrganizationEntity implements Serializable {
     private String metadata;
     @Builder.Default
     private String status = "active";
+
+    @Builder.Default
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "allowed_ips", nullable = false)
+    private Set<String> allowedIps = new HashSet<>();
+
+    @PrePersist
+    @PreUpdate
+    private void ensureAllowedIps() {
+        if (allowedIps == null) {
+            allowedIps = new HashSet<>();
+        }
+    }
 }

@@ -31,6 +31,12 @@ public class AuthContextService implements AuthContextProviderSrv.Iface {
                 .setContent(byteSerializer.serialize(contextFragment));
     }
 
+    @Override
+    public ContextFragment getPartyContext(String id) throws TException {
+        // TODO: реализовать
+        throw new UnsupportedOperationException("GetPartyContext is not implemented yet");
+    }
+
     private User getUser(String id) {
         UserInfo userInfo = userService.findById(id);
         User bouncerUser = bouncerConverter.toUser(userInfo.getMember(), userInfo.getOrganizations());

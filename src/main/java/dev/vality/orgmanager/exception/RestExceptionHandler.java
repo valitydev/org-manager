@@ -1,6 +1,7 @@
 package dev.vality.orgmanager.exception;
 
 import dev.vality.swag.organizations.model.JoinOrg422Response;
+import dev.vality.swag.organizations.model.ListOrgMembership400Response;
 import dev.vality.swag.organizations.model.RemoveMemberRole422Response;
 import dev.vality.swag.organizations.model.RevokeInvitation422Response;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,15 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FAILED_DEPENDENCY)
                 .build();
+    }
+
+    @ExceptionHandler(InvalidAllowedIpException.class)
+    public ResponseEntity<ListOrgMembership400Response> handleInvalidAllowedIpException(
+            InvalidAllowedIpException ex) {
+        ListOrgMembership400Response badResponse = new ListOrgMembership400Response()
+                .code(ListOrgMembership400Response.CodeEnum.INVALID_REQUEST)
+                .message(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(badResponse);
     }
 
     @ExceptionHandler(InviteExpiredException.class)

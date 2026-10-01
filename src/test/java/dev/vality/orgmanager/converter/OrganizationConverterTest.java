@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,6 +42,27 @@ class OrganizationConverterTest {
         assertEquals(organization.getName(), entity.getName());
         assertEquals("{\"a\":\"b\"}", entity.getMetadata());
         assertEquals(testOwnerId, entity.getOwner());
+    }
+
+    @Test
+    void shouldConvertAllowedIpsToEntity() {
+        Organization organization = new Organization()
+                .name(TestObjectFactory.randomString())
+                .allowedIps(Set.of("1.2.3.4", "10.0.0.1"));
+
+        OrganizationEntity entity = converter.toEntity(organization, "testOwnerId");
+
+        assertEquals(Set.of("1.2.3.4", "10.0.0.1"), entity.getAllowedIps());
+    }
+
+    @Test
+    void shouldConvertAllowedIpsToDomain() {
+        OrganizationEntity entity = TestObjectFactory.buildOrganization();
+        entity.setAllowedIps(Set.of("10.0.0.1", "1.2.3.4"));
+
+        Organization organization = converter.toDomain(entity);
+
+        assertEquals(Set.of("1.2.3.4", "10.0.0.1"), organization.getAllowedIps());
     }
 
     @Test

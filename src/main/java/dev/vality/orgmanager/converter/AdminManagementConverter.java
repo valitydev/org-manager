@@ -23,6 +23,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -44,6 +45,9 @@ public class AdminManagementConverter {
         String metadata = metadataOrNull(entity.getMetadata());
         if (metadata != null) {
             organization.setMetadata(metadata);
+        }
+        if (entity.getAllowedIps() != null && !entity.getAllowedIps().isEmpty()) {
+            organization.setAllowedIps(new HashSet<>(entity.getAllowedIps()));
         }
         return organization;
     }

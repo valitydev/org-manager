@@ -11,6 +11,7 @@ import dev.vality.orgmanager.entity.OrganizationEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,6 +40,9 @@ public class BouncerContextConverter {
                 .setId(entity.getId())
                 .setOwner(new Entity().setId(entity.getOwner()))
                 .setParty(new Entity().setId(entity.getParty()))
+                .setAllowedIps(CollectionUtils.isEmpty(entity.getAllowedIps())
+                        ? null
+                        : new HashSet<>(entity.getAllowedIps()))
                 .setRoles(CollectionUtils.isEmpty(roles) ? null :
                         roles.stream()
                                 .filter(memberRoleEntity -> memberRoleEntity.getOrganizationId().equals(entity.getId()))

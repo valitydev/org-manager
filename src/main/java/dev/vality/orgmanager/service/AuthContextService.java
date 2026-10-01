@@ -4,7 +4,10 @@ import dev.vality.bouncer.context.v1.User;
 import dev.vality.bouncer.ctx.ContextFragment;
 import dev.vality.bouncer.ctx.ContextFragmentType;
 import dev.vality.orgmanagement.AuthContextProviderSrv;
+import dev.vality.orgmanagement.PartyNotFound;
 import dev.vality.orgmanager.converter.BouncerContextConverter;
+import dev.vality.orgmanager.entity.OrganizationEntity;
+import dev.vality.orgmanager.repository.OrganizationRepository;
 import dev.vality.orgmanager.service.model.UserInfo;
 import dev.vality.woody.api.trace.ContextUtils;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
@@ -19,6 +22,7 @@ public class AuthContextService implements AuthContextProviderSrv.Iface {
 
     private final UserService userService;
     private final BouncerContextConverter bouncerConverter;
+    private final OrganizationRepository organizationRepository;
 
     @Override
     public ContextFragment getUserContext(String id) throws TException {
@@ -33,8 +37,15 @@ public class AuthContextService implements AuthContextProviderSrv.Iface {
 
     @Override
     public ContextFragment getPartyContext(String id) throws TException {
-        // TODO: реализовать
-        throw new UnsupportedOperationException("GetPartyContext is not implemented yet");
+        OrganizationEntity organization = organizationRepository.findByParty(id)
+                .orElseThrow(PartyNotFound::new);
+        dev.vality.bouncer.context.v1.ContextFragment contextFragment =
+                new dev.vality.bouncer.context.v1.ContextFragment();
+        contextFragment.setParty(bouncerConverter.toParty(organization));
+        TSerializer byteSerializer = new TSerializer();
+        return new ContextFragment()
+                .setType(ContextFragmentType.v1_thrift_binary)
+                .setContent(byteSerializer.serialize(contextFragment));
     }
 
     private User getUser(String id) {

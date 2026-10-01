@@ -4,6 +4,8 @@ import dev.vality.bouncer.base.Entity;
 import dev.vality.bouncer.context.v1.OrgRole;
 import dev.vality.bouncer.context.v1.OrgRoleScope;
 import dev.vality.bouncer.context.v1.Organization;
+import dev.vality.bouncer.context.v1.Party;
+import dev.vality.bouncer.context.v1.PartyOrganization;
 import dev.vality.bouncer.context.v1.User;
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
@@ -11,7 +13,6 @@ import dev.vality.orgmanager.entity.OrganizationEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,12 +43,23 @@ public class BouncerContextConverter {
                 .setParty(new Entity().setId(entity.getParty()))
                 .setAllowedIps(CollectionUtils.isEmpty(entity.getAllowedIps())
                         ? null
-                        : new HashSet<>(entity.getAllowedIps()))
+                        : entity.getAllowedIps())
                 .setRoles(CollectionUtils.isEmpty(roles) ? null :
                         roles.stream()
                                 .filter(memberRoleEntity -> memberRoleEntity.getOrganizationId().equals(entity.getId()))
                                 .map(this::toOrgRole)
                                 .collect(Collectors.toSet()));
+    }
+
+    public Party toParty(OrganizationEntity entity) {
+        return new Party()
+                .setId(entity.getParty())
+                .setOrganization(new PartyOrganization()
+                        .setId(entity.getId())
+                        .setOwner(new Entity().setId(entity.getOwner()))
+                        .setAllowedIps(CollectionUtils.isEmpty(entity.getAllowedIps())
+                                ? null
+                                : entity.getAllowedIps()));
     }
 
     public OrgRole toOrgRole(MemberRoleEntity entity) {

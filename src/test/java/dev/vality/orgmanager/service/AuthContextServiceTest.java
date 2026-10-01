@@ -50,11 +50,11 @@ public class AuthContextServiceTest {
         var member = TestObjectFactory.testMemberEntity(id);
         var organization = TestObjectFactory.buildOrganization(member);
         var userInfo = new UserInfo(member, Set.of(organization));
-        when(userService.findById(id)).thenReturn(userInfo);
+        when(userService.findByIdWithActiveOrganizations(id)).thenReturn(userInfo);
 
         var userContext = service.getUserContext(id);
 
-        verify(userService, times(1)).findById(id);
+        verify(userService, times(1)).findByIdWithActiveOrganizations(id);
         var contextFragment = new dev.vality.bouncer.context.v1.ContextFragment();
         byteDeserializer.deserialize(contextFragment, userContext.getContent());
 

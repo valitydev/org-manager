@@ -49,7 +49,7 @@ public class AuthContextService implements AuthContextProviderSrv.Iface {
     }
 
     private User getUser(String id) {
-        UserInfo userInfo = userService.findById(id);
+        UserInfo userInfo = userService.findByIdWithActiveOrganizations(id);
         User bouncerUser = bouncerConverter.toUser(userInfo.getMember(), userInfo.getOrganizations());
         if (userInfo.getMember() == null) {
             bouncerUser.setId(id);

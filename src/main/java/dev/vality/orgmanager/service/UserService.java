@@ -6,4 +6,6 @@ public interface UserService {
 
     UserInfo findById(String id);
 
+    UserInfo findByIdWithActiveOrganizations(String id);
+
 }

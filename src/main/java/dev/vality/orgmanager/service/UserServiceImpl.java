@@ -35,6 +35,17 @@ public class UserServiceImpl implements UserService {
         return new UserInfo(
                 user.orElse(null),
                 Stream.concat(memberOrganizations.stream(), ownedOrganizations.stream())
+                        .collect(Collectors.toSet())
+        );
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public UserInfo findByIdWithActiveOrganizations(String id) {
+        UserInfo userInfo = findById(id);
+        return new UserInfo(
+                userInfo.getMember(),
+                userInfo.getOrganizations().stream()
                         .filter(this::isActive)
                         .collect(Collectors.toSet())
         );

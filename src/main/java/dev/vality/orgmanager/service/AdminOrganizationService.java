@@ -108,15 +108,18 @@ public class AdminOrganizationService {
         log.info("Modify organization: organizationId={}, request={}", organizationId, request);
         ModifyOrganizationRequest safeRequest = request == null ? new ModifyOrganizationRequest() : request;
         OrganizationEntity organization = commonService.lockOrganization(organizationId);
-        if (safeRequest.isSetName()) {
-            organization.setName(commonService.requireText(safeRequest.getName(), "Organization name"));
-        }
-        if (safeRequest.isSetMetadata()) {
-            organization.setMetadata(commonService.toStoredMetadata(safeRequest.getMetadata()));
-        }
-        if (safeRequest.isSetAllowedIps()) {
-            organization.setAllowedIps(commonService.toAllowedIps(safeRequest.getAllowedIps()));
-        }
+        String name = safeRequest.isSetName()
+                ? commonService.requireText(safeRequest.getName(), "Organization name")
+                : organization.getName();
+        String metadata = safeRequest.isSetMetadata()
+                ? commonService.toStoredMetadata(safeRequest.getMetadata())
+                : organization.getMetadata();
+        Set<String> allowedIps = safeRequest.isSetAllowedIps()
+                ? commonService.toAllowedIps(safeRequest.getAllowedIps())
+                : organization.getAllowedIps();
+        organization.setName(name);
+        organization.setMetadata(metadata);
+        organization.setAllowedIps(allowedIps);
         return converter.toOrganization(organizationRepository.save(organization));
     }
 

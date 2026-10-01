@@ -89,6 +89,19 @@ class OrganizationAllowedIpsIntegrationTest extends AbstractRepositoryTest {
     }
 
     @Test
+    void shouldNotModifyOrganizationPartiallyOnInvalidAllowedIps() throws Exception {
+        String organizationId = create(Set.of("1.2.3.4")).getId();
+
+        assertThrows(InvalidRequest.class, () -> adminManagementService.modifyOrganization(
+                organizationId,
+                new ModifyOrganizationRequest().setName("Renamed").setAllowedIps(Set.of("not-an-ip"))));
+
+        Organization organization = adminManagementService.getOrganization(organizationId);
+        assertEquals("Organization", organization.getName());
+        assertEquals(Set.of("1.2.3.4"), organization.getAllowedIps());
+    }
+
+    @Test
     void shouldPassAllowedIpsToUserContext() throws Exception {
         String organizationId = create(Set.of("1.2.3.4", "10.0.0.1")).getId();
 

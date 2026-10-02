@@ -13,6 +13,7 @@ import dev.vality.orgmanager.repository.OrganizationRepository;
 import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
 import dev.vality.orgmanager.util.AllowedIps;
 import dev.vality.swag.organizations.model.*;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.representations.AccessToken;
@@ -43,6 +44,7 @@ public class OrganizationService {
     private final MemberContextRepository memberContextRepository;
     private final InvitationService invitationService;
     private final MemberRoleService memberRoleService;
+    private final EntityManager entityManager;
 
     // TODO [a.romanov]: idempotency
     @Transactional
@@ -60,9 +62,20 @@ public class OrganizationService {
     }
 
     @Transactional
-    public Organization modify(String orgId, String orgName) {
+    public Organization modify(String orgId, PatchOrgRequest request) {
+        organizationRepository.lockById(orgId).orElseThrow(ResourceNotFoundException::new);
         OrganizationEntity organizationEntity = findById(orgId);
-        organizationEntity.setName(orgName);
+        // сущность могла попасть в сессию до блокировки (open-in-view)
+        entityManager.refresh(organizationEntity);
+        Set<String> allowedIps = organizationEntity.getAllowedIps();
+        if (request.getAllowedIps().isPresent()) {
+            allowedIps = AllowedIps.normalize(request.getAllowedIps().get());
+            AllowedIps.validate(allowedIps);
+        }
+        if (request.getName() != null) {
+            organizationEntity.setName(request.getName());
+        }
+        organizationEntity.setAllowedIps(allowedIps);
         return organizationConverter.toDomain(organizationEntity);
     }
 

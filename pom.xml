@@ -25,7 +25,7 @@
         <exposed.ports>${server.port} ${server.rest.port} ${management.port}</exposed.ports>
         <keycloak.version>26.7.2</keycloak.version>
         <schedlock.version>7.7.0</schedlock.version>
-        <swag.organizations.version>1.40-a94b081</swag.organizations.version>
+        <swag.organizations.version>1.41-d12ada0</swag.organizations.version>
         <damsel.version>1.703-8d6174b</damsel.version>
         <shared-resources.version>5.0.0</shared-resources.version>
         <woody.version>3.0.0</woody.version>

@@ -166,14 +166,13 @@ public class OrgsController implements OrgsApi {
         return organizationRoleService.list(orgId);
     }
 
-    // TODO: allowedIps — после появления поля в PatchOrgRequest
     @Override
     public ResponseEntity<Organization> patchOrg(String requestId, String orgId, PatchOrgRequest request) {
         ResourceDto resource = ResourceDto.builder()
                 .orgId(orgId)
                 .build();
         resourceAccessService.checkRights(resource);
-        Organization modifiedOrganization = organizationService.modify(orgId, request.getName());
+        Organization modifiedOrganization = organizationService.modify(orgId, request);
         return ResponseEntity.ok(modifiedOrganization);
     }
 

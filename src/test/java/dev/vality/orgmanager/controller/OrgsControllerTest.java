@@ -1,11 +1,13 @@
 package dev.vality.orgmanager.controller;
 
+import dev.vality.orgmanagement.ModifyOrganizationRequest;
 import dev.vality.orgmanager.TestObjectFactory;
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
 import dev.vality.orgmanager.exception.AccessDeniedException;
 import dev.vality.orgmanager.exception.BouncerException;
+import dev.vality.orgmanager.service.AdminManagementService;
 import dev.vality.orgmanager.service.dto.ResourceDto;
 import dev.vality.orgmanager.util.TestData;
 import dev.vality.swag.organizations.model.InvitationRequest;
@@ -13,11 +15,14 @@ import dev.vality.swag.organizations.model.MemberRole;
 import dev.vality.swag.organizations.model.Organization;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -25,6 +30,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsAnything.anything;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -36,6 +42,9 @@ public class OrgsControllerTest extends AbstractControllerTest {
     public static final String ORGANIZATION_ID = "3Kf21K54ldE3";
 
     public static final String MEMBER_ID = "L6Mc2la1D9Rg";
+
+    @Autowired
+    private AdminManagementService adminManagementService;
 
     @Test
     void expelOrgMemberWithErrorCallBouncer() throws Exception {
@@ -265,5 +274,99 @@ public class OrgsControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.code", equalTo("invalidRequest")));
 
         assertTrue(organizationRepository.findAll().isEmpty());
+    }
+
+    @Test
+    void patchOrgAllowedIps() throws Exception {
+        OrganizationEntity organization = saveOrganizationWithAllowedIps("1.2.3.4");
+
+        patchOrg(organization.getId(), "{\"allowedIps\": [\" 5.6.7.8\", \"::1\"]}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", equalTo(organization.getName())))
+                .andExpect(jsonPath("$.allowedIps", containsInAnyOrder("5.6.7.8", "::1")));
+
+        assertThat(organizationRepository.findById(organization.getId()).orElseThrow().getAllowedIps(),
+                is(Set.of("5.6.7.8", "::1")));
+    }
+
+    @Test
+    void patchOrgNameKeepsAllowedIps() throws Exception {
+        OrganizationEntity organization = saveOrganizationWithAllowedIps("1.2.3.4");
+
+        patchOrg(organization.getId(), "{\"name\": \"Renamed\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", equalTo("Renamed")))
+                .andExpect(jsonPath("$.allowedIps", containsInAnyOrder("1.2.3.4")));
+    }
+
+    @Test
+    void patchOrgClearsAllowedIps() throws Exception {
+        OrganizationEntity withEmptyList = saveOrganizationWithAllowedIps("1.2.3.4");
+        OrganizationEntity withNull = saveOrganizationWithAllowedIps("1.2.3.4");
+
+        patchOrg(withEmptyList.getId(), "{\"allowedIps\": []}").andExpect(status().isOk());
+        patchOrg(withNull.getId(), "{\"allowedIps\": null}").andExpect(status().isOk());
+
+        assertTrue(organizationRepository.findById(withEmptyList.getId()).orElseThrow().getAllowedIps().isEmpty());
+        assertTrue(organizationRepository.findById(withNull.getId()).orElseThrow().getAllowedIps().isEmpty());
+    }
+
+    @Test
+    void patchOrgWithInvalidAllowedIps() throws Exception {
+        OrganizationEntity organization = saveOrganizationWithAllowedIps("1.2.3.4");
+
+        patchOrg(organization.getId(), "{\"name\": \"Renamed\", \"allowedIps\": [\"not-an-ip\"]}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", equalTo("invalidRequest")));
+
+        OrganizationEntity stored = organizationRepository.findById(organization.getId()).orElseThrow();
+        assertThat(stored.getName(), is(organization.getName()));
+        assertThat(stored.getAllowedIps(), is(Set.of("1.2.3.4")));
+    }
+
+    @Test
+    void patchOrgKeepsConcurrentChanges() throws Exception {
+        OrganizationEntity organization = saveOrganizationWithAllowedIps("1.2.3.4");
+        String orgId = organization.getId();
+        doAnswer(invocation -> {
+            organizationRepository.findById(orgId);
+            CompletableFuture.runAsync(() -> modifyAllowedIps(orgId, "5.6.7.8")).join();
+            return null;
+        }).when(resourceAccessService).checkRights(ArgumentMatchers.any(ResourceDto.class));
+
+        mockMvc.perform(patch("/orgs/" + orgId)
+                        .contentType("application/json")
+                        .content("{\"name\": \"Renamed\"}")
+                        .header("Authorization", "Bearer " + generateAdminJwt())
+                        .header("X-Request-ID", "testRequestId"))
+                .andExpect(status().isOk());
+
+        OrganizationEntity stored = organizationRepository.findById(orgId).orElseThrow();
+        assertThat(stored.getName(), is("Renamed"));
+        assertThat(stored.getAllowedIps(), is(Set.of("5.6.7.8")));
+    }
+
+    private void modifyAllowedIps(String orgId, String... allowedIps) {
+        try {
+            adminManagementService.modifyOrganization(
+                    orgId, new ModifyOrganizationRequest().setAllowedIps(Set.of(allowedIps)));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private OrganizationEntity saveOrganizationWithAllowedIps(String... allowedIps) {
+        OrganizationEntity organization = TestObjectFactory.buildOrganization();
+        organization.setAllowedIps(Set.of(allowedIps));
+        return organizationRepository.save(organization);
+    }
+
+    private ResultActions patchOrg(String orgId, String body) throws Exception {
+        doNothing().when(resourceAccessService).checkRights(ArgumentMatchers.any(ResourceDto.class));
+        return mockMvc.perform(patch("/orgs/" + orgId)
+                .contentType("application/json")
+                .content(body)
+                .header("Authorization", "Bearer " + generateAdminJwt())
+                .header("X-Request-ID", "testRequestId"));
     }
 }

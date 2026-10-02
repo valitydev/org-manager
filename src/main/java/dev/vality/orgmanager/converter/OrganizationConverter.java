@@ -5,10 +5,12 @@ import dev.vality.orgmanager.util.JsonCodec;
 import dev.vality.swag.organizations.model.Organization;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.HashSet;
 import java.util.UUID;
 
 @Service
@@ -27,6 +29,9 @@ public class OrganizationConverter {
                 .owner(ownerId)
                 .party(partyId)
                 .metadata(jsonCodec.toJson(organization.getMetadata()))
+                .allowedIps(organization.getAllowedIps() == null
+                        ? new HashSet<>()
+                        : new HashSet<>(organization.getAllowedIps()))
                 .build();
     }
 
@@ -37,7 +42,10 @@ public class OrganizationConverter {
                 .name(entity.getName())
                 .owner(entity.getOwner())
                 .party(entity.getParty())
-                .metadata(entity.getMetadata() != null ? jsonCodec.toMap(entity.getMetadata()) : null);
+                .metadata(entity.getMetadata() != null ? jsonCodec.toMap(entity.getMetadata()) : null)
+                .allowedIps(CollectionUtils.isEmpty(entity.getAllowedIps())
+                        ? null
+                        : new HashSet<>(entity.getAllowedIps()));
     }
 
 }

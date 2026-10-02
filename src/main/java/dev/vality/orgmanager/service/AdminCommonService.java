@@ -5,13 +5,16 @@ import dev.vality.orgmanagement.OrganizationNotFound;
 import dev.vality.orgmanagement.RoleScope;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
+import dev.vality.orgmanager.exception.InvalidAllowedIpException;
 import dev.vality.orgmanager.repository.OrganizationRepository;
+import dev.vality.orgmanager.util.AllowedIpsUtil;
 import dev.vality.orgmanager.util.JsonCodec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -42,6 +45,16 @@ public class AdminCommonService {
             return jsonCodec.toJson(jsonCodec.toMap(metadata));
         } catch (RuntimeException exception) {
             throw new InvalidRequest("Metadata is expected to be a JSON object");
+        }
+    }
+
+    public Set<String> toAllowedIps(Set<String> allowedIps) throws InvalidRequest {
+        Set<String> normalized = AllowedIpsUtil.normalize(allowedIps);
+        try {
+            AllowedIpsUtil.validate(normalized);
+            return normalized;
+        } catch (InvalidAllowedIpException exception) {
+            throw new InvalidRequest(exception.getMessage());
         }
     }
 

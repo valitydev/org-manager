@@ -172,7 +172,7 @@ public class OrgsController implements OrgsApi {
                 .orgId(orgId)
                 .build();
         resourceAccessService.checkRights(resource);
-        Organization modifiedOrganization = organizationService.modify(orgId, request.getName());
+        Organization modifiedOrganization = organizationService.modify(orgId, request);
         return ResponseEntity.ok(modifiedOrganization);
     }
 

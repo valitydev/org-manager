@@ -4,6 +4,8 @@ import dev.vality.bouncer.base.Entity;
 import dev.vality.bouncer.context.v1.OrgRole;
 import dev.vality.bouncer.context.v1.OrgRoleScope;
 import dev.vality.bouncer.context.v1.Organization;
+import dev.vality.bouncer.context.v1.Party;
+import dev.vality.bouncer.context.v1.PartyOrganization;
 import dev.vality.bouncer.context.v1.User;
 import dev.vality.orgmanager.entity.MemberEntity;
 import dev.vality.orgmanager.entity.MemberRoleEntity;
@@ -39,11 +41,25 @@ public class BouncerContextConverter {
                 .setId(entity.getId())
                 .setOwner(new Entity().setId(entity.getOwner()))
                 .setParty(new Entity().setId(entity.getParty()))
+                .setAllowedIps(CollectionUtils.isEmpty(entity.getAllowedIps())
+                        ? null
+                        : entity.getAllowedIps())
                 .setRoles(CollectionUtils.isEmpty(roles) ? null :
                         roles.stream()
                                 .filter(memberRoleEntity -> memberRoleEntity.getOrganizationId().equals(entity.getId()))
                                 .map(this::toOrgRole)
                                 .collect(Collectors.toSet()));
+    }
+
+    public Party toParty(OrganizationEntity entity) {
+        return new Party()
+                .setId(entity.getParty())
+                .setOrganization(new PartyOrganization()
+                        .setId(entity.getId())
+                        .setOwner(new Entity().setId(entity.getOwner()))
+                        .setAllowedIps(CollectionUtils.isEmpty(entity.getAllowedIps())
+                                ? null
+                                : entity.getAllowedIps()));
     }
 
     public OrgRole toOrgRole(MemberRoleEntity entity) {

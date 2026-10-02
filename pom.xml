@@ -25,8 +25,8 @@
         <exposed.ports>${server.port} ${server.rest.port} ${management.port}</exposed.ports>
         <keycloak.version>26.7.2</keycloak.version>
         <schedlock.version>7.7.0</schedlock.version>
-        <swag.organizations.version>1.38-8c9b968</swag.organizations.version>
-        <damsel.version>1.699-7280b62</damsel.version>
+        <swag.organizations.version>1.41-d12ada0</swag.organizations.version>
+        <damsel.version>1.703-8d6174b</damsel.version>
         <shared-resources.version>5.0.0</shared-resources.version>
         <woody.version>3.0.0</woody.version>
     </properties>
@@ -60,7 +60,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>org-management-proto</artifactId>
-            <version>1.23-e544bc9</version>
+            <version>1.25-21db07e</version>
             <exclusions>
                 <exclusion>
                     <groupId>dev.vality</groupId>
@@ -71,7 +71,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>bouncer-proto</artifactId>
-            <version>1.57-31866c3</version>
+            <version>1.63-fa083c3</version>
         </dependency>
         <!--spring-->
         <dependency>
@@ -162,6 +162,30 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>32.0.0-jre</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>1.11.0</version>
+            <!-- используется только InetAddressValidator -->
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-beanutils</groupId>
+                    <artifactId>commons-beanutils</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-digester</groupId>
+                    <artifactId>commons-digester</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-collections</groupId>
+                    <artifactId>commons-collections</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.openapitools</groupId>

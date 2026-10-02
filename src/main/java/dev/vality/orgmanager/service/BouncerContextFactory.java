@@ -65,7 +65,7 @@ public class BouncerContextFactory {
 
     private User buildUser() {
         AccessToken accessToken = keycloakService.getAccessToken();
-        UserInfo userInfo = userService.findById(accessToken.getSubject());
+        UserInfo userInfo = userService.findByIdWithActiveOrganizations(accessToken.getSubject());
         User bouncerUser = bouncerConverter.toUser(userInfo.getMember(), userInfo.getOrganizations());
         if (userInfo.getMember() == null) {
             bouncerUser.setId(accessToken.getSubject());

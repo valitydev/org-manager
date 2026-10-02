@@ -5,6 +5,7 @@ import dev.vality.orgmanager.entity.OrganizationEntity;
 import dev.vality.orgmanager.entity.OrganizationRoleEntity;
 import dev.vality.orgmanager.entity.ScopeEntity;
 import dev.vality.orgmanager.service.OrganizationService;
+import dev.vality.swag.organizations.model.PatchOrgRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,7 @@ public class OrganizationRepositoryTest extends AbstractRepositoryTest {
                 .createdAt(LocalDateTime.now())
                 .name("name")
                 .owner("owner")
+                .party("party")
                 .members(Set.of(member))
                 .build();
 
@@ -44,7 +46,7 @@ public class OrganizationRepositoryTest extends AbstractRepositoryTest {
         organizationRepository.save(organization);
 
         String modifyOrgName = "testOrgName";
-        organizationService.modify(ORGANIZATION_ID, modifyOrgName);
+        organizationService.modify(ORGANIZATION_ID, new PatchOrgRequest().name(modifyOrgName));
 
         Optional<OrganizationEntity> organizationEntityOptional = organizationRepository.findById(ORGANIZATION_ID);
         assertTrue(organizationEntityOptional.isPresent());

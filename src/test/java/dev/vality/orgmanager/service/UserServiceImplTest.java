@@ -126,7 +126,7 @@ class UserServiceImplTest extends AbstractRepositoryTest {
     }
 
     @Test
-    void doesNotExposeDeactivatedOrganizationInUserContext() {
+    void findByIdReturnsDeactivatedOrganizations() {
         String memberId = TestObjectFactory.randomString();
         MemberEntity member = TestObjectFactory.testMemberEntity(memberId);
         OrganizationEntity organization = TestObjectFactory.buildOrganization(member);
@@ -137,6 +137,24 @@ class UserServiceImplTest extends AbstractRepositoryTest {
         UserInfo userInfo = userService.findById(memberId);
 
         assertEquals(memberId, userInfo.getMember().getId());
-        assertTrue(userInfo.getOrganizations().isEmpty());
+        assertEquals(organization.getId(), userInfo.getOrganizations().iterator().next().getId());
+    }
+
+    @Test
+    void findByIdWithActiveOrganizationsSkipsDeactivatedOrganizations() {
+        String memberId = TestObjectFactory.randomString();
+        MemberEntity member = TestObjectFactory.testMemberEntity(memberId);
+        OrganizationEntity deactivated = TestObjectFactory.buildOrganization(member);
+        deactivated.setStatus("deactivated");
+        OrganizationEntity active = TestObjectFactory.buildOrganization();
+        active.setOwner(memberId);
+        memberRepository.save(member);
+        organizationRepository.saveAll(List.of(deactivated, active));
+
+        UserInfo userInfo = userService.findByIdWithActiveOrganizations(memberId);
+
+        assertEquals(memberId, userInfo.getMember().getId());
+        assertEquals(1, userInfo.getOrganizations().size());
+        assertEquals(active.getId(), userInfo.getOrganizations().iterator().next().getId());
     }
 }

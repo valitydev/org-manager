@@ -11,7 +11,9 @@ import dev.vality.orgmanager.repository.MemberContextRepository;
 import dev.vality.orgmanager.repository.MemberRepository;
 import dev.vality.orgmanager.repository.OrganizationRepository;
 import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
+import dev.vality.orgmanager.util.AllowedIpsUtil;
 import dev.vality.swag.organizations.model.*;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.representations.AccessToken;
@@ -42,6 +44,7 @@ public class OrganizationService {
     private final MemberContextRepository memberContextRepository;
     private final InvitationService invitationService;
     private final MemberRoleService memberRoleService;
+    private final EntityManager entityManager;
 
     // TODO [a.romanov]: idempotency
     @Transactional
@@ -50,15 +53,29 @@ public class OrganizationService {
             Organization organization,
             String idempotencyKey) {
         String keycloakUserId = token.getSubject();
+        Set<String> allowedIps = AllowedIpsUtil.normalize(organization.getAllowedIps());
+        AllowedIpsUtil.validate(allowedIps);
+        organization.setAllowedIps(allowedIps);
         OrganizationEntity entity = organizationConverter.toEntity(organization, keycloakUserId);
         OrganizationEntity savedEntity = organizationRepository.save(entity);
         return organizationConverter.toDomain(savedEntity);
     }
 
     @Transactional
-    public Organization modify(String orgId, String orgName) {
+    public Organization modify(String orgId, PatchOrgRequest request) {
+        organizationRepository.lockById(orgId).orElseThrow(ResourceNotFoundException::new);
         OrganizationEntity organizationEntity = findById(orgId);
-        organizationEntity.setName(orgName);
+        // сущность могла попасть в сессию до блокировки (open-in-view)
+        entityManager.refresh(organizationEntity);
+        Set<String> allowedIps = organizationEntity.getAllowedIps();
+        if (request.getAllowedIps().isPresent()) {
+            allowedIps = AllowedIpsUtil.normalize(request.getAllowedIps().get());
+            AllowedIpsUtil.validate(allowedIps);
+        }
+        if (request.getName() != null) {
+            organizationEntity.setName(request.getName());
+        }
+        organizationEntity.setAllowedIps(allowedIps);
         return organizationConverter.toDomain(organizationEntity);
     }
 

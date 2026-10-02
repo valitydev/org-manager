@@ -55,7 +55,8 @@ class BouncerContextFactoryTest {
         var organization = TestObjectFactory.buildOrganization(member);
         var bouncerContext = TestObjectFactory.testBouncerContextDto(id);
 
-        when(userService.findById(id)).thenReturn(new UserInfo(member, Set.of(organization)));
+        when(userService.findByIdWithActiveOrganizations(id))
+                .thenReturn(new UserInfo(member, Set.of(organization)));
         when(keycloakService.getAccessToken()).thenReturn(token);
 
         Context context = bouncerContextFactory.buildContext(bouncerContext);
@@ -71,7 +72,7 @@ class BouncerContextFactoryTest {
         assertEquals(member.getId(), contextFragment.getUser().getId());
         assertEquals(bouncerContext.getOperationName(), contextFragment.getOrgmgmt().getOp().getId());
         assertEquals(member.getId(), contextFragment.getOrgmgmt().getOp().getMember().getId());
-        verify(userService, times(2)).findById(anyString());
+        verify(userService, times(2)).findByIdWithActiveOrganizations(anyString());
     }
 
 }

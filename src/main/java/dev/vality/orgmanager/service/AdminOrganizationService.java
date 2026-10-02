@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static dev.vality.orgmanager.service.AdminCommonService.pageLimit;
@@ -52,6 +53,7 @@ public class AdminOrganizationService {
         commonService.requireText(request.getOwnerId(), "Owner id");
         String name = commonService.requireText(request.getName(), "Organization name");
         String metadata = commonService.toStoredMetadata(request.getMetadata());
+        Set<String> allowedIps = commonService.toAllowedIps(request.getAllowedIps());
         organizationRepository.lockByParty(partyId);
         if (organizationRepository.existsByParty(partyId)) {
             throw new PartyAlreadyBound();
@@ -66,6 +68,7 @@ public class AdminOrganizationService {
                 .status(StoredOrganizationStatus.ACTIVE.getValue())
                 .members(new HashSet<>())
                 .roles(new HashSet<>())
+                .allowedIps(allowedIps)
                 .build();
         return converter.toOrganization(organizationRepository.saveAndFlush(entity));
     }
@@ -105,12 +108,18 @@ public class AdminOrganizationService {
         log.info("Modify organization: organizationId={}, request={}", organizationId, request);
         ModifyOrganizationRequest safeRequest = request == null ? new ModifyOrganizationRequest() : request;
         OrganizationEntity organization = commonService.lockOrganization(organizationId);
-        if (safeRequest.isSetName()) {
-            organization.setName(commonService.requireText(safeRequest.getName(), "Organization name"));
-        }
-        if (safeRequest.isSetMetadata()) {
-            organization.setMetadata(commonService.toStoredMetadata(safeRequest.getMetadata()));
-        }
+        String name = safeRequest.isSetName()
+                ? commonService.requireText(safeRequest.getName(), "Organization name")
+                : organization.getName();
+        String metadata = safeRequest.isSetMetadata()
+                ? commonService.toStoredMetadata(safeRequest.getMetadata())
+                : organization.getMetadata();
+        Set<String> allowedIps = safeRequest.isSetAllowedIps()
+                ? commonService.toAllowedIps(safeRequest.getAllowedIps())
+                : organization.getAllowedIps();
+        organization.setName(name);
+        organization.setMetadata(metadata);
+        organization.setAllowedIps(allowedIps);
         return converter.toOrganization(organizationRepository.save(organization));
     }
 

@@ -113,4 +113,23 @@ class BouncerContextConverterTest {
         assertEquals(organizationEntity.getParty(), organization.getParty().getId());
         assertEquals(memberRoleEntity.getRoleId(), organization.getRoles().iterator().next().getId());
     }
+
+    @Test
+    void shouldConvertOrganizationAllowedIps() {
+        OrganizationEntity organizationEntity = TestObjectFactory.buildOrganization();
+        organizationEntity.setAllowedIps(Set.of("1.2.3.4", "10.0.0.1"));
+
+        var organization = converter.toOrganization(organizationEntity, Collections.emptySet());
+
+        assertEquals(Set.of("1.2.3.4", "10.0.0.1"), organization.getAllowedIps());
+    }
+
+    @Test
+    void shouldNotSetEmptyAllowedIps() {
+        OrganizationEntity organizationEntity = TestObjectFactory.buildOrganization();
+
+        var organization = converter.toOrganization(organizationEntity, Collections.emptySet());
+
+        assertFalse(organization.isSetAllowedIps());
+    }
 }

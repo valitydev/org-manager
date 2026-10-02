@@ -7,11 +7,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class AllowedIps {
+public final class AllowedIpsUtil {
 
     private static final InetAddressValidator IP_VALIDATOR = InetAddressValidator.getInstance();
 
-    private AllowedIps() {
+    private AllowedIpsUtil() {
     }
 
     public static Set<String> normalize(Collection<String> values) {

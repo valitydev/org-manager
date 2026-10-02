@@ -7,7 +7,7 @@ import dev.vality.orgmanager.entity.MemberRoleEntity;
 import dev.vality.orgmanager.entity.OrganizationEntity;
 import dev.vality.orgmanager.exception.InvalidAllowedIpException;
 import dev.vality.orgmanager.repository.OrganizationRepository;
-import dev.vality.orgmanager.util.AllowedIps;
+import dev.vality.orgmanager.util.AllowedIpsUtil;
 import dev.vality.orgmanager.util.JsonCodec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -49,9 +49,9 @@ public class AdminCommonService {
     }
 
     public Set<String> toAllowedIps(Set<String> allowedIps) throws InvalidRequest {
-        Set<String> normalized = AllowedIps.normalize(allowedIps);
+        Set<String> normalized = AllowedIpsUtil.normalize(allowedIps);
         try {
-            AllowedIps.validate(normalized);
+            AllowedIpsUtil.validate(normalized);
             return normalized;
         } catch (InvalidAllowedIpException exception) {
             throw new InvalidRequest(exception.getMessage());

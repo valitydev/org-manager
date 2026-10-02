@@ -15,22 +15,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class AllowedIpsTest {
+class AllowedIpsUtilTest {
 
     @Test
     void normalizeShouldTrimAndDeduplicate() {
         assertEquals(Set.of("1.2.3.4", "10.0.0.1"),
-                AllowedIps.normalize(List.of(" 1.2.3.4", "1.2.3.4 ", "10.0.0.1")));
+                AllowedIpsUtil.normalize(List.of(" 1.2.3.4", "1.2.3.4 ", "10.0.0.1")));
     }
 
     @Test
     void normalizeShouldNotValidate() {
-        assertEquals(Set.of("not-an-ip", ""), AllowedIps.normalize(List.of(" not-an-ip ", "  ")));
+        assertEquals(Set.of("not-an-ip", ""), AllowedIpsUtil.normalize(List.of(" not-an-ip ", "  ")));
     }
 
     @Test
     void normalizeShouldReturnEmptySetForNull() {
-        assertTrue(AllowedIps.normalize(null).isEmpty());
+        assertTrue(AllowedIpsUtil.normalize(null).isEmpty());
     }
 
     @ParameterizedTest
@@ -38,7 +38,7 @@ class AllowedIpsTest {
             "1.2.3.4", "0.0.0.0", "255.255.255.255", "::1", "::", "2001:db8::1", "2001:DB8::1", "::ffff:1.2.3.4"
     })
     void validateShouldAcceptIpAddress(String value) {
-        assertDoesNotThrow(() -> AllowedIps.validate(List.of(value)));
+        assertDoesNotThrow(() -> AllowedIpsUtil.validate(List.of(value)));
     }
 
     @ParameterizedTest
@@ -49,11 +49,11 @@ class AllowedIpsTest {
             "1.2.3.4 5.6.7.8"
     })
     void validateShouldRejectInvalidValue(String value) {
-        assertThrows(InvalidAllowedIpException.class, () -> AllowedIps.validate(Arrays.asList(value)));
+        assertThrows(InvalidAllowedIpException.class, () -> AllowedIpsUtil.validate(Arrays.asList(value)));
     }
 
     @Test
     void validateShouldAcceptNull() {
-        assertDoesNotThrow(() -> AllowedIps.validate(null));
+        assertDoesNotThrow(() -> AllowedIpsUtil.validate(null));
     }
 }

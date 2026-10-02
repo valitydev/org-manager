@@ -11,7 +11,7 @@ import dev.vality.orgmanager.repository.MemberContextRepository;
 import dev.vality.orgmanager.repository.MemberRepository;
 import dev.vality.orgmanager.repository.OrganizationRepository;
 import dev.vality.orgmanager.service.dto.MemberWithRoleDto;
-import dev.vality.orgmanager.util.AllowedIps;
+import dev.vality.orgmanager.util.AllowedIpsUtil;
 import dev.vality.swag.organizations.model.*;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -53,8 +53,8 @@ public class OrganizationService {
             Organization organization,
             String idempotencyKey) {
         String keycloakUserId = token.getSubject();
-        Set<String> allowedIps = AllowedIps.normalize(organization.getAllowedIps());
-        AllowedIps.validate(allowedIps);
+        Set<String> allowedIps = AllowedIpsUtil.normalize(organization.getAllowedIps());
+        AllowedIpsUtil.validate(allowedIps);
         organization.setAllowedIps(allowedIps);
         OrganizationEntity entity = organizationConverter.toEntity(organization, keycloakUserId);
         OrganizationEntity savedEntity = organizationRepository.save(entity);
@@ -69,8 +69,8 @@ public class OrganizationService {
         entityManager.refresh(organizationEntity);
         Set<String> allowedIps = organizationEntity.getAllowedIps();
         if (request.getAllowedIps().isPresent()) {
-            allowedIps = AllowedIps.normalize(request.getAllowedIps().get());
-            AllowedIps.validate(allowedIps);
+            allowedIps = AllowedIpsUtil.normalize(request.getAllowedIps().get());
+            AllowedIpsUtil.validate(allowedIps);
         }
         if (request.getName() != null) {
             organizationEntity.setName(request.getName());

@@ -1,11 +1,10 @@
 package dev.vality.orgmanager.servlet;
 
+import dev.vality.bouncer.ctx.ContextFragment;
 import dev.vality.orgmanagement.AuthContextProviderSrv;
+import dev.vality.woody.api.trace.ContextUtils;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
 import dev.vality.woody.thrift.impl.http.THServiceBuilder;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 import jakarta.servlet.GenericServlet;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletConfig;
@@ -13,9 +12,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebServlet;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.thrift.TException;
 
 import java.io.IOException;
-import java.util.List;
 
 @WebServlet("/auth-context")
 @Slf4j
@@ -30,10 +31,28 @@ public class AuthContextProviderServlet extends GenericServlet {
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         thriftServlet = new THServiceBuilder()
-                .withMetaExtensions(
-                        List.of(UserIdentityEmailExtensionKit.INSTANCE)
-                )
-                .build(AuthContextProviderSrv.Iface.class, authContextProvider);
+                .build(AuthContextProviderSrv.Iface.class, new EmailRequiringAuthContextProvider(authContextProvider));
+    }
+
+    @RequiredArgsConstructor
+    static class EmailRequiringAuthContextProvider implements AuthContextProviderSrv.Iface {
+
+        private final AuthContextProviderSrv.Iface delegate;
+
+        @Override
+        public ContextFragment getUserContext(String id) throws TException {
+            String email = ContextUtils.getCustomMetadataValue(UserIdentityEmailExtensionKit.INSTANCE.getExtension());
+            if (email == null) {
+                throw new IllegalArgumentException(
+                        "Required woody metadata is missing: " + UserIdentityEmailExtensionKit.KEY);
+            }
+            return delegate.getUserContext(id);
+        }
+
+        @Override
+        public ContextFragment getPartyContext(String id) throws TException {
+            return delegate.getPartyContext(id);
+        }
     }
 
     @Override

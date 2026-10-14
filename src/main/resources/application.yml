@@ -89,6 +89,9 @@ bouncer:
   auth-method: SessionToken
   realm: external
   rule-set-id: change_it
+  requester-ip-headers:
+    - CF-Connecting-IP
+    - X-Forwarded-For
 
 access-check:
   enabled: false

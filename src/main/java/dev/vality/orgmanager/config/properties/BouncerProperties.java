@@ -16,6 +16,6 @@ public class BouncerProperties {
     private String authMethod;
     private String realm;
     private String ruleSetId;
-    private List<String> requesterIpHeaders = List.of("CF-Connecting-IP", "X-Forwarded-For");
+    private List<String> requesterIpHeaders;
 
 }

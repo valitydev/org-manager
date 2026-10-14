@@ -21,6 +21,7 @@ class RequesterIpResolverTest {
 
     @BeforeEach
     void setUp() {
+        bouncerProperties.setRequesterIpHeaders(List.of("CF-Connecting-IP", "X-Forwarded-For"));
         request.setRemoteAddr("10.0.0.1");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }

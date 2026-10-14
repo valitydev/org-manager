@@ -30,6 +30,7 @@ public class BouncerContextFactory {
     private final BouncerProperties bouncerProperties;
     private final UserService userService;
     private final KeycloakService keycloakService;
+    private final RequesterIpResolver requesterIpResolver;
 
     public Context buildContext(BouncerContextDto bouncerContext) throws TException {
         Context context = new Context();
@@ -43,12 +44,15 @@ public class BouncerContextFactory {
     }
 
     private ContextFragment buildContextFragment(BouncerContextDto bouncerContext) throws TException {
-        // TODO надо ли доставать requester?
         ContextFragment contextFragment = new ContextFragment()
                 .setAuth(buildAuth())
                 .setUser(buildUser())
                 .setEnv(buildEnvironment())
                 .setOrgmgmt(buildOrgManagementContext(bouncerContext));
+        requesterIpResolver.resolve()
+                .ifPresentOrElse(
+                        ip -> contextFragment.setRequester(new Requester().setIp(ip)),
+                        () -> log.warn("Requester ip is not resolved, bouncer context is built without it"));
         log.debug("Context fragment to bouncer {}", contextFragment);
         return contextFragment;
 

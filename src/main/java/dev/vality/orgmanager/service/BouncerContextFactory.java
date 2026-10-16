@@ -10,6 +10,7 @@ import dev.vality.orgmanager.config.properties.BouncerProperties;
 import dev.vality.orgmanager.converter.BouncerContextConverter;
 import dev.vality.orgmanager.service.dto.BouncerContextDto;
 import dev.vality.orgmanager.service.dto.InvitationDto;
+import dev.vality.orgmanager.service.dto.RoleDto;
 import dev.vality.orgmanager.service.model.UserInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -79,6 +80,18 @@ public class BouncerContextFactory {
         return bouncerUser;
     }
 
+    /**
+     * Участник, над которым выполняется операция (не инициатор запроса): политика проверяет,
+     * что он состоит в организации из операции.
+     */
+    private User buildMember(String memberId) {
+        UserInfo userInfo = userService.findByIdWithActiveOrganizations(memberId);
+        User member = bouncerConverter.toUser(userInfo.getMember(), userInfo.getOrganizations());
+        member.setId(memberId);
+        member.setRealm(new Entity().setId(bouncerProperties.getRealm()));
+        return member;
+    }
+
     private Environment buildEnvironment() {
         Environment env = new Environment();
         Deployment deployment = new Deployment();
@@ -105,14 +118,15 @@ public class BouncerContextFactory {
             orgManagementOperation.setOrganization(new Entity().setId(bouncerContext.getOrganizationId()));
         }
         if (Objects.nonNull(bouncerContext.getMemberId())) {
-            orgManagementOperation.setMember(buildUser());
+            orgManagementOperation.setMember(buildMember(bouncerContext.getMemberId()));
         }
-        if (Objects.nonNull(bouncerContext.getRole())) {
-            OrgRole role = new OrgRole();
-            role.setId(bouncerContext.getRole().getRoleId());
-            OrgRoleScope orgRoleScope = new OrgRoleScope();
-            orgRoleScope.setShop(new Entity().setId(bouncerContext.getRole().getScopeResourceId()));
-            role.setScope(orgRoleScope);
+        RoleDto roleDto = bouncerContext.getRole();
+        if (Objects.nonNull(roleDto) && Objects.nonNull(roleDto.getRoleId())) {
+            OrgRole role = new OrgRole().setId(roleDto.getRoleId());
+            if (Objects.nonNull(roleDto.getScopeResourceId())) {
+                role.setScope(new OrgRoleScope().setShop(new Entity().setId(roleDto.getScopeResourceId())));
+            }
+            orgManagementOperation.setRole(role);
         }
         return orgManagementOperation;
     }
@@ -124,9 +138,12 @@ public class BouncerContextFactory {
         }
         if (Objects.nonNull(bouncerContext.getInvitation())) {
             InvitationDto invitationDto = bouncerContext.getInvitation();
-            Invitee invitee = new Invitee();
-            invitee.setEmail(invitationDto.getEmail());
-            orgManagementInvitation.setId(invitationDto.getInvitationId());
+            if (Objects.nonNull(invitationDto.getInvitationId())) {
+                orgManagementInvitation.setId(invitationDto.getInvitationId());
+            }
+            if (Objects.nonNull(invitationDto.getEmail())) {
+                orgManagementInvitation.setInvitee(new Invitee().setEmail(invitationDto.getEmail()));
+            }
         }
         return orgManagementInvitation;
     }

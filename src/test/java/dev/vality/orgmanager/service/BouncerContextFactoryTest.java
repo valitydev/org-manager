@@ -131,18 +131,20 @@ class BouncerContextFactoryTest {
         var contextFragment = deserialize(bouncerContextFactory.buildContext(bouncerContext)
                 .getFragments().get(bouncerProperties.getContextFragmentId()));
 
-        assertEquals(requesterId, contextFragment.getUser().getId());
+        assertEquals(token.getSubject(), contextFragment.getUser().getId());
         var op = contextFragment.getOrgmgmt().getOp();
-        assertEquals(targetId, op.getMember().getId());
+        assertEquals(bouncerContext.getOperationName(), op.getId());
+        assertEquals(bouncerContext.getOrganizationId(), op.getOrganization().getId());
+        assertEquals(bouncerContext.getMemberId(), op.getMember().getId());
         assertEquals(bouncerProperties.getRealm(), op.getMember().getRealm().getId());
         assertEquals(Set.of(organization.getId()), op.getMember().getOrgs().stream()
                 .map(Organization::getId)
                 .collect(Collectors.toSet()));
-        assertEquals("Manager", op.getRole().getId());
-        assertEquals("shop-id", op.getRole().getScope().getShop().getId());
+        assertEquals(bouncerContext.getRole().getRoleId(), op.getRole().getId());
+        assertEquals(bouncerContext.getRole().getScopeResourceId(), op.getRole().getScope().getShop().getId());
         var invitation = contextFragment.getOrgmgmt().getInvitation();
-        assertEquals("invitation-id", invitation.getId());
-        assertEquals("invitee@example.com", invitation.getInvitee().getEmail());
+        assertEquals(bouncerContext.getInvitation().getInvitationId(), invitation.getId());
+        assertEquals(bouncerContext.getInvitation().getEmail(), invitation.getInvitee().getEmail());
     }
 
     @Test
@@ -169,7 +171,7 @@ class BouncerContextFactoryTest {
                 .getFragments().get(bouncerProperties.getContextFragmentId()));
 
         var op = contextFragment.getOrgmgmt().getOp();
-        assertEquals(targetId, op.getMember().getId());
+        assertEquals(bouncerContext.getMemberId(), op.getMember().getId());
         assertTrue(op.getMember().getOrgs().isEmpty());
         assertFalse(op.isSetRole());
         var invitation = contextFragment.getOrgmgmt().getInvitation();

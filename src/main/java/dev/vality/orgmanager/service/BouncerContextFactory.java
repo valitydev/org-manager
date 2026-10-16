@@ -80,17 +80,6 @@ public class BouncerContextFactory {
         return bouncerUser;
     }
 
-    /**
-     * Собирает пользователя {@code memberId} с его активными организациями для {@code op.member}.
-     */
-    private User buildMember(String memberId) {
-        UserInfo userInfo = userService.findByIdWithActiveOrganizations(memberId);
-        User member = bouncerConverter.toUser(userInfo.getMember(), userInfo.getOrganizations());
-        member.setId(memberId);
-        member.setRealm(new Entity().setId(bouncerProperties.getRealm()));
-        return member;
-    }
-
     private Environment buildEnvironment() {
         Environment env = new Environment();
         Deployment deployment = new Deployment();
@@ -128,6 +117,17 @@ public class BouncerContextFactory {
             orgManagementOperation.setRole(role);
         }
         return orgManagementOperation;
+    }
+
+    /**
+     * Собирает пользователя {@code memberId} с его активными организациями для {@code op.member}.
+     */
+    private User buildMember(String memberId) {
+        UserInfo userInfo = userService.findByIdWithActiveOrganizations(memberId);
+        User member = bouncerConverter.toUser(userInfo.getMember(), userInfo.getOrganizations());
+        member.setId(memberId);
+        member.setRealm(new Entity().setId(bouncerProperties.getRealm()));
+        return member;
     }
 
     private OrgManagementInvitation buildOrgManagementInvitation(BouncerContextDto bouncerContext) {

@@ -81,8 +81,7 @@ public class BouncerContextFactory {
     }
 
     /**
-     * Участник, над которым выполняется операция (не инициатор запроса): политика проверяет,
-     * что он состоит в организации из операции.
+     * Собирает пользователя {@code memberId} с его активными организациями для {@code op.member}.
      */
     private User buildMember(String memberId) {
         UserInfo userInfo = userService.findByIdWithActiveOrganizations(memberId);

@@ -28,7 +28,7 @@
         <swag.organizations.version>1.41-d12ada0</swag.organizations.version>
         <damsel.version>1.703-8d6174b</damsel.version>
         <shared-resources.version>5.0.0</shared-resources.version>
-        <woody.version>3.0.0</woody.version>
+        <woody.version>4.0.0</woody.version>
     </properties>
 
     <dependencies>

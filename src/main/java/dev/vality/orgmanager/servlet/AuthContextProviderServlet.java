@@ -2,6 +2,8 @@ package dev.vality.orgmanager.servlet;
 
 import dev.vality.bouncer.ctx.ContextFragment;
 import dev.vality.orgmanagement.AuthContextProviderSrv;
+import dev.vality.orgmanagement.PartyNotFound;
+import dev.vality.woody.api.flow.error.ErrorLogPolicy;
 import dev.vality.woody.api.trace.ContextUtils;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
 import dev.vality.woody.thrift.impl.http.THServiceBuilder;
@@ -15,6 +17,7 @@ import jakarta.servlet.annotation.WebServlet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.thrift.TException;
+import org.slf4j.event.Level;
 
 import java.io.IOException;
 
@@ -31,6 +34,9 @@ public class AuthContextProviderServlet extends GenericServlet {
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         thriftServlet = new THServiceBuilder()
+                .withErrorLogPolicy(ErrorLogPolicy.builder()
+                        .levelWithoutStacktrace(PartyNotFound.class, Level.INFO)
+                        .build())
                 .build(AuthContextProviderSrv.Iface.class, new EmailRequiringAuthContextProvider(authContextProvider));
     }
 
